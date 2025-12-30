@@ -1,0 +1,12 @@
+{
+  "Version": 1,
+  "Hash": "xpwVGOwjVJuy0ARj6aivwUuxvTiv5a0iO1VO8J/n8nM=",
+  "Source": "JobTracker.Api",
+  "BasePath": "_content/JobTracker.Api",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": [],
+  "Endpoints": []
+}
