@@ -169,7 +169,7 @@ The API will be available at:
 📁 Project Structure (High Level)
 ---------------------------------
 
-JobTracker/
+``` powershell JobTracker/
 ├── Api/
 │   ├── Endpoints/
 │   ├── Models/
@@ -178,6 +178,7 @@ JobTracker/
 ├── app.db
 ├── Program.cs
 └── README.md
+```
 
 * * * * *
 
