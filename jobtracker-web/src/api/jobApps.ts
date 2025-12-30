@@ -1,0 +1,68 @@
+import { api } from "./client";
+
+/**
+ * IMPORTANT:
+ * These must match your backend enum names EXACTLY (case-sensitive).
+ * If you’re unsure, open: api/JobTracker.Api/Models/ApplicationStatus.cs
+ */
+export type ApplicationStatus =
+  | "Draft"
+  | "Applied"
+  | "Interviewing"
+  | "Offer"
+  | "Rejected"
+  | "Accepted";
+
+export type JobAppDto = {
+  id: number;
+  company: string;
+  roleTitle: string;
+  status: ApplicationStatus;
+  notes: string | null;
+  createdAtUtc: string;
+  updatedAtUtc: string;
+};
+
+export type PagedResult<T> = {
+  items: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
+export async function listJobApps(params: {
+  q?: string;
+  status?: ApplicationStatus;
+  page?: number;
+  pageSize?: number;
+}) {
+  const res = await api.get<PagedResult<JobAppDto>>("/api/job-apps", { params });
+  return res.data;
+}
+
+export async function createJobApp(payload: {
+  company: string;
+  roleTitle: string;
+  status?: ApplicationStatus;
+  notes?: string | null;
+}) {
+  const res = await api.post<JobAppDto>("/api/job-apps", payload);
+  return res.data;
+}
+
+export async function updateJobApp(
+  id: number,
+  payload: Partial<{
+    company: string;
+    roleTitle: string;
+    status: ApplicationStatus;
+    notes: string | null;
+  }>
+) {
+  const res = await api.patch<JobAppDto>(`/api/job-apps/${id}`, payload);
+  return res.data;
+}
+
+export async function deleteJobApp(id: number) {
+  await api.delete(`/api/job-apps/${id}`);
+}
