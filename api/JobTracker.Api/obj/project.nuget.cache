@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "qk4e/BRMxTk=",
+  "dgSpecHash": "Sng/yZS4tTM=",
   "success": true,
-  "projectFilePath": "C:\\Users\\Maximo\\Documents\\JobTracker\\api\\Jobtracker.Api\\JobTracker.Api.csproj",
+  "projectFilePath": "C:\\Users\\Maximo\\Documents\\JobTracker\\api\\JobTracker.Api\\JobTracker.Api.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Maximo\\.nuget\\packages\\bcrypt.net-next\\4.0.3\\bcrypt.net-next.4.0.3.nupkg.sha512",
     "C:\\Users\\Maximo\\.nuget\\packages\\humanizer.core\\2.14.1\\humanizer.core.2.14.1.nupkg.sha512",
