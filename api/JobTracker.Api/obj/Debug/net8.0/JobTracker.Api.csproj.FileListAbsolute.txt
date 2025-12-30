@@ -138,3 +138,4 @@ C:\Users\Maximo\Documents\JobTracker\api\Jobtracker.Api\obj\Debug\net8.0\refint\
 C:\Users\Maximo\Documents\JobTracker\api\Jobtracker.Api\obj\Debug\net8.0\JobTracker.Api.pdb
 C:\Users\Maximo\Documents\JobTracker\api\Jobtracker.Api\obj\Debug\net8.0\JobTracker.Api.genruntimeconfig.cache
 C:\Users\Maximo\Documents\JobTracker\api\Jobtracker.Api\obj\Debug\net8.0\ref\JobTracker.Api.dll
+C:\Users\Maximo\Documents\JobTracker\api\JobTracker.Api\obj\Debug\net8.0\JobTracker.Api.sourcelink.json
