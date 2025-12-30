@@ -16,3 +16,9 @@ export function setAuthToken(token: string | null) {
     delete api.defaults.headers.common.Authorization;
   }
 }
+
+// 🔑 IMPORTANT: attach token immediately on first load
+const existingToken = localStorage.getItem("jt_token");
+if (existingToken) {
+  setAuthToken(existingToken);
+}
