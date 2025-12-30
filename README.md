@@ -160,9 +160,11 @@ cd JobTracker
 dotnet restore
 dotnet run`
 
-The API will be available at:
+The API will be available at a local development URL similar to:
 
-`http://localhost:5000/api`
+`http://localhost:5137/api`
+
+(The exact port may vary depending on your environment.)
 
 * * * * *
 
