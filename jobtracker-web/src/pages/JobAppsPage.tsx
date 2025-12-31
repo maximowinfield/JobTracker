@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import type { ApplicationStatus, JobAppDto } from "../api/jobApps";
 import { createJobApp, deleteJobApp, listJobApps, updateJobApp } from "../api/jobApps";
@@ -40,11 +40,23 @@ function isApplicationStatus(value: string): value is ApplicationStatus {
   return (STATUS_OPTIONS as readonly string[]).includes(value);
 }
 
+function parseIntOr(value: string | null, fallback: number): number {
+  const n = Number(value);
+  return Number.isFinite(n) && n > 0 ? n : fallback;
+}
+
 export default function JobAppsPage() {
   const { logout } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
+  // ✅ debounced search: user types into qInput, after 400ms we set q used for API
+  const [qInput, setQInput] = useState("");
   const [q, setQ] = useState("");
+
+  const debounceRef = useRef<number | null>(null);
+
+
   const [status, setStatus] = useState<ApplicationStatus | "">("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState<(typeof PAGE_SIZES)[number]>(25);
@@ -65,6 +77,60 @@ export default function JobAppsPage() {
     () => Math.max(1, Math.ceil(total / pageSize)),
     [total, pageSize]
   );
+
+  // ✅ init state from URL once (so refresh/share works)
+  useEffect(() => {
+    const urlQ = searchParams.get("q") ?? "";
+    const urlStatus = searchParams.get("status") ?? "";
+    const urlPage = parseIntOr(searchParams.get("page"), 1);
+    const urlPageSize = parseIntOr(searchParams.get("pageSize"), 25);
+
+    setQ(urlQ);
+    setQInput(urlQ);
+
+    setStatus(urlStatus === "" ? "" : isApplicationStatus(urlStatus) ? urlStatus : "");
+    setPage(urlPage);
+
+    const sizeOk = (PAGE_SIZES as readonly number[]).includes(urlPageSize);
+    setPageSize(sizeOk ? (urlPageSize as (typeof PAGE_SIZES)[number]) : 25);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ✅ debounce: qInput -> q, reset to page 1 on new search
+useEffect(() => {
+if (debounceRef.current) {
+  window.clearTimeout(debounceRef.current);
+  debounceRef.current = null;
+}
+
+  debounceRef.current = window.setTimeout(() => {
+    setPage((p) => (p === 1 ? p : 1));
+    setQ(qInput);
+  }, 400);
+
+  return () => {
+if (debounceRef.current) {
+  window.clearTimeout(debounceRef.current);
+  debounceRef.current = null;
+}
+
+  };
+}, [qInput]);
+
+
+  // ✅ keep URL in sync with current filters
+  useEffect(() => {
+    const next = new URLSearchParams();
+
+    const trimmed = q.trim();
+    if (trimmed) next.set("q", trimmed);
+    if (status) next.set("status", status);
+    if (page !== 1) next.set("page", String(page));
+    if (pageSize !== 25) next.set("pageSize", String(pageSize));
+
+    setSearchParams(next, { replace: true });
+  }, [q, status, page, pageSize, setSearchParams]);
 
   async function load() {
     setLoading(true);
@@ -201,7 +267,6 @@ export default function JobAppsPage() {
 
   function applyFilters() {
     setPage(1);
-    void load();
   }
 
   return (
@@ -254,20 +319,28 @@ export default function JobAppsPage() {
           alignItems: "end",
         }}
       >
-        <label style={{ display: "grid", gap: 6 }}>
-          Search (company, role, notes)
-          <input
-            value={q}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              setQ(e.target.value)
-            }
-            onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-              if (e.key === "Enter") applyFilters();
-            }}
-            placeholder="e.g., Amazon"
-            style={{ padding: 10 }}
-          />
-        </label>
+<label style={{ display: "grid", gap: 6 }}>
+  Search (company, role, notes)
+  <input
+    value={qInput}
+    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setQInput(e.target.value)}
+    onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        if (debounceRef.current) {
+  window.clearTimeout(debounceRef.current);
+  debounceRef.current = null;
+}
+
+        setPage(1);
+        setQ(qInput);
+      }
+    }}
+    placeholder="e.g., Amazon"
+    style={{ padding: 10 }}
+  />
+</label>
+
 
         <label style={{ display: "grid", gap: 6 }}>
           Status
@@ -345,8 +418,25 @@ export default function JobAppsPage() {
                 </tr>
               ) : items.length === 0 ? (
                 <tr>
-                  <td colSpan={5} style={{ padding: 16 }}>
-                    No results.
+                  <td colSpan={5} style={{ padding: 24 }}>
+                    <div style={{ display: "grid", gap: 10 }}>
+                      <div style={{ fontWeight: 600 }}>
+                        {q.trim() || status ? "No matching results" : "No applications yet"}
+                      </div>
+                      <div style={{ opacity: 0.75 }}>
+                        {q.trim() || status
+                          ? "Try clearing filters or searching a different keyword."
+                          : "Create your first application to start tracking companies, statuses, and notes."}
+                      </div>
+                      <div>
+                        <button
+                          onClick={openCreate}
+                          style={{ padding: "10px 12px", cursor: "pointer" }}
+                        >
+                          + Create your first application
+                        </button>
+                      </div>
+                    </div>
                   </td>
                 </tr>
               ) : (
