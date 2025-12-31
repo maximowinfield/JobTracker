@@ -53,10 +53,15 @@ export default function JobAppsPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // ✅ debounced search: user types into qInput, after 400ms we set q used for API
-  const [qInput, setQInput] = useState("");
-  const [q, setQ] = useState("");
-  const debounceRef = useRef<number | null>(null);
+// ✅ debounced search: user types into qInput; we commit to qCommitted after a pause
+const [qInput, setQInput] = useState("");
+const [qCommitted, setQCommitted] = useState(""); // used for API + URL
+const debounceRef = useRef<number | null>(null);
+
+// Track focus so we don't commit/reload mid-edit and "kick" focus away
+const searchInputRef = useRef<HTMLInputElement | null>(null);
+const [isSearchFocused, setIsSearchFocused] = useState(false);
+
 
   const loadToastIdRef = useRef<string | null>(null);
   const loadToastTimerRef = useRef<number | null>(null);
@@ -81,6 +86,7 @@ export default function JobAppsPage() {
   const [pageSize, setPageSize] = useState<(typeof PAGE_SIZES)[number]>(25);
 
   const [loading, setLoading] = useState(true);
+  const [isFetching, setIsFetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [items, setItems] = useState<JobAppDto[]>([]);
@@ -110,8 +116,9 @@ export default function JobAppsPage() {
     const urlPage = parseIntOr(searchParams.get("page"), 1);
     const urlPageSize = parseIntOr(searchParams.get("pageSize"), 25);
 
-    setQ(urlQ);
-    setQInput(urlQ);
+setQCommitted(urlQ);
+setQInput(urlQ);
+
 
     setStatus(urlStatus === "" ? "" : isApplicationStatus(urlStatus) ? urlStatus : "");
     setPage(urlPage);
@@ -122,25 +129,37 @@ export default function JobAppsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ✅ debounce: qInput -> q, reset to page 1 on new search
-  useEffect(() => {
+// ✅ debounce: qInput -> qCommitted, only commit when user is still focused in the search box
+useEffect(() => {
+  if (debounceRef.current) {
+    window.clearTimeout(debounceRef.current);
+    debounceRef.current = null;
+  }
+
+  debounceRef.current = window.setTimeout(() => {
+    // If the user is not actively editing the search field, don't commit.
+    // This prevents re-renders from disrupting focus mid-edit.
+    if (!isSearchFocused) return;
+
+    const next = qInput.trim();
+
+    setQCommitted((prev) => {
+      if (prev === next) return prev;
+      return next;
+    });
+
+    // Only reset page when committing a new query (not every keystroke)
+    setPage(1);
+  }, 400);
+
+  return () => {
     if (debounceRef.current) {
       window.clearTimeout(debounceRef.current);
       debounceRef.current = null;
     }
+  };
+}, [qInput, isSearchFocused]);
 
-    debounceRef.current = window.setTimeout(() => {
-      setPage((p) => (p === 1 ? p : 1));
-      setQ(qInput);
-    }, 400);
-
-    return () => {
-      if (debounceRef.current) {
-        window.clearTimeout(debounceRef.current);
-        debounceRef.current = null;
-      }
-    };
-  }, [qInput]);
 
   // Loading toast in load()
   
@@ -149,18 +168,23 @@ export default function JobAppsPage() {
   useEffect(() => {
     const next = new URLSearchParams();
 
-    const trimmed = q.trim();
-    if (trimmed) next.set("q", trimmed);
+    if (qCommitted) next.set("q", qCommitted);
     if (status) next.set("status", status);
     if (page !== 1) next.set("page", String(page));
     if (pageSize !== 25) next.set("pageSize", String(pageSize));
 
     setSearchParams(next, { replace: true });
-  }, [q, status, page, pageSize, setSearchParams]);
+  }, [qCommitted, status, page, pageSize, setSearchParams]);
 
 async function load() {
-  setLoading(true);
-  setError(null);
+setError(null);
+
+// If we've never loaded anything yet, show "loading" screen.
+// Otherwise, do a background fetch that doesn't disable inputs.
+const isFirstLoad = items.length === 0 && total === 0;
+if (isFirstLoad) setLoading(true);
+else setIsFetching(true);
+
 
   // ⬇️ USE THE HELPERS HERE ⬇️
   clearLoadToastTimer();
@@ -173,7 +197,7 @@ async function load() {
 
   try {
     const res = await listJobApps({
-      q: q.trim() ? q.trim() : undefined,
+      q: qCommitted ? qCommitted : undefined,
       status: status || undefined,
       page,
       pageSize,
@@ -198,6 +222,8 @@ async function load() {
     clearLoadToastTimer();
     dismissLoadToast();
     setLoading(false);
+    setIsFetching(false);
+
   }
 }
 
@@ -205,7 +231,7 @@ async function load() {
   useEffect(() => {
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q, status, page, pageSize]);
+  }, [qCommitted, status, page, pageSize]);
 
   function openCreate() {
     setEditing(null);
@@ -349,7 +375,7 @@ return (
         <div>
           <h1 className="m-0 text-2xl font-bold">Job Applications</h1>
           <div className="mt-1 text-sm text-slate-500">
-            {loading ? "Loading…" : `${total} total`}
+            {loading || isFetching ? "Loading…" : `${total} total`}
           </div>
         </div>
 
@@ -379,22 +405,30 @@ return (
         <label className="grid gap-1.5 text-sm font-medium text-slate-700">
           Search (company, role, notes)
 <input
+  ref={searchInputRef}
   value={qInput}
   onChange={(e) => setQInput(e.target.value)}
+  onFocus={() => setIsSearchFocused(true)}
+  onBlur={() => setIsSearchFocused(false)}
   onKeyDown={(e) => {
     if (e.key !== "Enter") return;
     e.preventDefault();
+
+    // Cancel pending debounce and commit immediately
     if (debounceRef.current) {
       window.clearTimeout(debounceRef.current);
       debounceRef.current = null;
     }
+
+    const next = qInput.trim();
+    setQCommitted(next);
     setPage(1);
-    setQ(qInput);
   }}
   placeholder="e.g., Amazon"
-  disabled={loading}
+  disabled={saving || deleting}
   className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
 />
+
         </label>
 
         <label className="grid gap-1.5 text-sm font-medium text-slate-700">
@@ -469,7 +503,7 @@ return (
             </thead>
 
             <tbody>
-              {loading ? (
+              {(loading || isFetching) ? (
                 <tr>
                   <td colSpan={5} className="px-3 py-4 text-slate-600">
                     Loading…
@@ -480,12 +514,12 @@ return (
                   <td colSpan={5} className="px-3 py-6">
                     <div className="grid gap-2">
                       <div className="font-semibold text-slate-800">
-                        {q.trim() || status ? "No matching results" : "No applications yet"}
+                        {qCommitted || status ? "No matching results" : "No applications yet"}
                       </div>
                       <div className="text-slate-500">
-                        {q.trim() || status
-                          ? "Try clearing filters or searching a different keyword."
-                          : "Create your first application to start tracking companies, statuses, and notes."}
+                        {qCommitted || status
+  ? "Try clearing filters or searching a different keyword."
+  : "Create your first application to start tracking companies, statuses, and notes."}
                       </div>
                       <div>
                         <button
