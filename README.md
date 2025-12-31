@@ -7,6 +7,9 @@ This project focuses on **real-world backend engineering practices**, including 
 
 * * * * *
 
+<img width="2556" height="1269" alt="image" src="https://github.com/user-attachments/assets/c78a725f-c802-4ac7-9296-708c7fe3f7b3" />
+
+
 🎯 Project Purpose
 ------------------
 
