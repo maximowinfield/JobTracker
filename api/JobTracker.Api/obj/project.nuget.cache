@@ -1,9 +1,11 @@
 {
   "version": 2,
-  "dgSpecHash": "Sng/yZS4tTM=",
+  "dgSpecHash": "Ur6rtZy2YlM=",
   "success": true,
   "projectFilePath": "C:\\Users\\Maximo\\Documents\\JobTracker\\api\\JobTracker.Api\\JobTracker.Api.csproj",
   "expectedPackageFiles": [
+    "C:\\Users\\Maximo\\.nuget\\packages\\awssdk.core\\4.0.3.6\\awssdk.core.4.0.3.6.nupkg.sha512",
+    "C:\\Users\\Maximo\\.nuget\\packages\\awssdk.s3\\4.0.16.1\\awssdk.s3.4.0.16.1.nupkg.sha512",
     "C:\\Users\\Maximo\\.nuget\\packages\\bcrypt.net-next\\4.0.3\\bcrypt.net-next.4.0.3.nupkg.sha512",
     "C:\\Users\\Maximo\\.nuget\\packages\\humanizer.core\\2.14.1\\humanizer.core.2.14.1.nupkg.sha512",
     "C:\\Users\\Maximo\\.nuget\\packages\\microsoft.aspnetcore.authentication.jwtbearer\\8.0.11\\microsoft.aspnetcore.authentication.jwtbearer.8.0.11.nupkg.sha512",

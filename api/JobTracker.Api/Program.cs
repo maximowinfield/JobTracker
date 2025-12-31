@@ -9,6 +9,8 @@ using Microsoft.Extensions.Logging;
 using System.Security.Claims;
 using System.Linq;
 using System.Text.Json.Serialization;
+using Amazon.S3;
+using Amazon;
 
 
 
@@ -27,6 +29,21 @@ builder.Services.AddDbContext<AppDbContext>(opt =>
     var cs = builder.Configuration.GetConnectionString("Default") ?? "Data Source=app.db";
     opt.UseSqlite(cs);
 });
+
+
+// ================================
+// S3_DI_REGISTRATION_PROGRAM_CS
+// ================================
+builder.Services.AddSingleton<IAmazonS3>(_ =>
+{
+    var region = Environment.GetEnvironmentVariable("AWS_REGION")
+                 ?? builder.Configuration["AWS_REGION"]
+                 ?? throw new Exception("AWS_REGION is not set (env var or config).");
+
+    return new AmazonS3Client(RegionEndpoint.GetBySystemName(region));
+});
+
+
 
 // ----- JWT Options -----
 var jwtSection = builder.Configuration.GetSection("JWT");
@@ -137,6 +154,16 @@ app.MapGet("/api/debug/jwt", (JwtOptions o) => Results.Ok(new
     o.Audience,
     SecretLength = o.Secret.Length
 }));
+
+app.MapGet("/api/debug/s3", () => Results.Ok(new
+{
+    Region = Environment.GetEnvironmentVariable("AWS_REGION"),
+    Bucket = Environment.GetEnvironmentVariable("S3_BUCKET_NAME"),
+    HasAccessKey = !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("AWS_ACCESS_KEY_ID")),
+    HasSecretKey = !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("AWS_SECRET_ACCESS_KEY")),
+}))
+.AllowAnonymous();
+
 
 
 app.MapAuth();
