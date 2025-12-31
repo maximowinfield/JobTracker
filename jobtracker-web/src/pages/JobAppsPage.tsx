@@ -3,6 +3,9 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import type { ApplicationStatus, JobAppDto } from "../api/jobApps";
 import { createJobApp, deleteJobApp, listJobApps, updateJobApp } from "../api/jobApps";
+import StatusBadge from "../components/StatusBadge";
+import toast from "react-hot-toast";
+
 
 const PAGE_SIZES = [10, 25, 50, 100] as const;
 
@@ -53,8 +56,24 @@ export default function JobAppsPage() {
   // ✅ debounced search: user types into qInput, after 400ms we set q used for API
   const [qInput, setQInput] = useState("");
   const [q, setQ] = useState("");
-
   const debounceRef = useRef<number | null>(null);
+
+  const loadToastIdRef = useRef<string | null>(null);
+  const loadToastTimerRef = useRef<number | null>(null);
+
+  function clearLoadToastTimer() {
+    if (loadToastTimerRef.current) {
+      window.clearTimeout(loadToastTimerRef.current);
+      loadToastTimerRef.current = null;
+    }
+  }
+
+  function dismissLoadToast() {
+    if (loadToastIdRef.current) {
+      toast.dismiss(loadToastIdRef.current);
+      loadToastIdRef.current = null;
+    }
+  }
 
 
   const [status, setStatus] = useState<ApplicationStatus | "">("");
@@ -72,6 +91,12 @@ export default function JobAppsPage() {
   const [editing, setEditing] = useState<JobAppDto | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm());
   const [saving, setSaving] = useState(false);
+
+  // ✅ delete confirm modal state
+  const [confirmDelete, setConfirmDelete] = useState<JobAppDto | null>(null);
+
+  // deleting modal state
+  const [deleting, setDeleting] = useState(false);
 
   const totalPages = useMemo(
     () => Math.max(1, Math.ceil(total / pageSize)),
@@ -98,26 +123,27 @@ export default function JobAppsPage() {
   }, []);
 
   // ✅ debounce: qInput -> q, reset to page 1 on new search
-useEffect(() => {
-if (debounceRef.current) {
-  window.clearTimeout(debounceRef.current);
-  debounceRef.current = null;
-}
+  useEffect(() => {
+    if (debounceRef.current) {
+      window.clearTimeout(debounceRef.current);
+      debounceRef.current = null;
+    }
 
-  debounceRef.current = window.setTimeout(() => {
-    setPage((p) => (p === 1 ? p : 1));
-    setQ(qInput);
-  }, 400);
+    debounceRef.current = window.setTimeout(() => {
+      setPage((p) => (p === 1 ? p : 1));
+      setQ(qInput);
+    }, 400);
 
-  return () => {
-if (debounceRef.current) {
-  window.clearTimeout(debounceRef.current);
-  debounceRef.current = null;
-}
+    return () => {
+      if (debounceRef.current) {
+        window.clearTimeout(debounceRef.current);
+        debounceRef.current = null;
+      }
+    };
+  }, [qInput]);
 
-  };
-}, [qInput]);
-
+  // Loading toast in load()
+  
 
   // ✅ keep URL in sync with current filters
   useEffect(() => {
@@ -132,35 +158,49 @@ if (debounceRef.current) {
     setSearchParams(next, { replace: true });
   }, [q, status, page, pageSize, setSearchParams]);
 
-  async function load() {
-    setLoading(true);
-    setError(null);
+async function load() {
+  setLoading(true);
+  setError(null);
 
-    try {
-      const res = await listJobApps({
-        q: q.trim() ? q.trim() : undefined,
-        status: status || undefined,
-        page,
-        pageSize,
-      });
+  // ⬇️ USE THE HELPERS HERE ⬇️
+  clearLoadToastTimer();
+  dismissLoadToast();
 
-      setItems(res.items);
-      setTotal(res.total);
-    } catch (err: unknown) {
-      const maybeAxiosErr = err as { response?: { status?: number } } | null;
-      const code = maybeAxiosErr?.response?.status;
+  // Only show loading toast if request takes >500ms
+  loadToastTimerRef.current = window.setTimeout(() => {
+    loadToastIdRef.current = toast.loading("Loading applications…");
+  }, 500);
 
-      if (code === 401) {
-        logout();
-        navigate("/login", { replace: true });
-        return;
-      }
+  try {
+    const res = await listJobApps({
+      q: q.trim() ? q.trim() : undefined,
+      status: status || undefined,
+      page,
+      pageSize,
+    });
 
-      setError("Failed to load job applications.");
-    } finally {
-      setLoading(false);
+    setItems(res.items);
+    setTotal(res.total);
+  } catch (err: unknown) {
+    const maybeAxiosErr = err as { response?: { status?: number } } | null;
+    const code = maybeAxiosErr?.response?.status;
+
+    if (code === 401) {
+      logout();
+      navigate("/login", { replace: true });
+      return;
     }
+
+    setError("Failed to load job applications.");
+    toast.error("Failed to load applications.");
+  } finally {
+    // ⬇️ AND HERE ⬇️
+    clearLoadToastTimer();
+    dismissLoadToast();
+    setLoading(false);
   }
+}
+
 
   useEffect(() => {
     void load();
@@ -184,24 +224,36 @@ if (debounceRef.current) {
     setShowModal(true);
   }
 
+
+
   function closeModal() {
     setShowModal(false);
     setEditing(null);
     setSaving(false);
   }
 
-  async function onSave() {
-    const company = form.company.trim();
-    const roleTitle = form.roleTitle.trim();
+  function openDeleteConfirm(row: JobAppDto) {
+    setConfirmDelete(row);
+  }
 
-    if (!company || !roleTitle) {
-      setError("Company and Role Title are required.");
-      return;
-    }
+  function closeDeleteConfirm() {
+    setConfirmDelete(null);
+  }
 
-    setSaving(true);
-    setError(null);
+async function onSave() {
+  const company = form.company.trim();
+  const roleTitle = form.roleTitle.trim();
 
+  if (!company || !roleTitle) {
+    setError("Company and Role Title are required.");
+    toast.error("Company and Role Title are required.");
+    return;
+  }
+
+  setSaving(true);
+  setError(null);
+
+  const run = async () => {
     try {
       if (editing) {
         await updateJobApp(editing.id, {
@@ -225,29 +277,37 @@ if (debounceRef.current) {
       const maybeAxiosErr = err as { response?: { status?: number } } | null;
       const code = maybeAxiosErr?.response?.status;
 
-      if (code === 401) {
-        logout();
-        navigate("/login", { replace: true });
-        return;
-      }
+if (code === 401) {
+  logout();
+  navigate("/login", { replace: true });
+  throw new Error("Unauthorized");
+}
+
 
       setError(
         "Save failed. (If this happened after selecting a Status, your enum values may not match.)"
       );
+      throw err; // 👈 so toast.promise shows error toast
     } finally {
       setSaving(false);
     }
-  }
+  };
 
-  async function onDelete(row: JobAppDto) {
-    const ok = window.confirm(`Delete "${row.company} — ${row.roleTitle}"?`);
-    if (!ok) return;
+  await toast.promise(run(), {
+    loading: editing ? "Saving changes…" : "Creating application…",
+    success: editing ? "Application updated." : "Application created.",
+    error: "Save failed.",
+  });
+}
 
-    setError(null);
+
+async function onDelete(row: JobAppDto) {
+  setError(null);
+
+  const run = async () => {
     try {
       await deleteJobApp(row.id);
 
-      // if we deleted the last item on the page, step back
       const willHave = items.length - 1;
       if (willHave <= 0 && page > 1) setPage(page - 1);
       else await load();
@@ -255,51 +315,59 @@ if (debounceRef.current) {
       const maybeAxiosErr = err as { response?: { status?: number } } | null;
       const code = maybeAxiosErr?.response?.status;
 
-      if (code === 401) {
-        logout();
-        navigate("/login", { replace: true });
-        return;
-      }
+if (code === 401) {
+  logout();
+  navigate("/login", { replace: true });
+  throw new Error("Unauthorized");
+}
+
 
       setError("Delete failed.");
+      throw err; // 👈 rethrow so toast.promise shows the error toast
     }
-  }
+  };
+
+  await toast.promise(run(), {
+    loading: "Deleting…",
+    success: "Application deleted.",
+    error: "Delete failed.",
+  });
+}
+
+
+
 
   function applyFilters() {
     setPage(1);
   }
 
-  return (
-    <div style={{ maxWidth: 1100, margin: "24px auto", padding: 16 }}>
+return (
+  <div className="min-h-screen w-full bg-neutral-900">
+    <div className="mx-auto max-w-5xl p-4 md:p-6">
       {/* Header */}
-      <header
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          gap: 12,
-          alignItems: "center",
-        }}
-      >
+      <header className="flex items-center justify-between gap-3">
         <div>
-          <h1 style={{ margin: 0 }}>Job Applications</h1>
-          <div style={{ opacity: 0.75, marginTop: 6 }}>
+          <h1 className="m-0 text-2xl font-bold">Job Applications</h1>
+          <div className="mt-1 text-sm text-slate-500">
             {loading ? "Loading…" : `${total} total`}
           </div>
         </div>
 
-        <div style={{ display: "flex", gap: 8 }}>
-          <button
-            onClick={openCreate}
-            style={{ padding: "10px 12px", cursor: "pointer" }}
-          >
-            + New
-          </button>
+        <div className="flex gap-2">
+<button
+  onClick={openCreate}
+  disabled={loading || saving}
+  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium hover:bg-slate-50 active:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+>
+  + New
+</button>
+
           <button
             onClick={() => {
               logout();
               navigate("/login", { replace: true });
             }}
-            style={{ padding: "10px 12px", cursor: "pointer" }}
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium hover:bg-slate-50 active:bg-slate-100"
           >
             Sign out
           </button>
@@ -307,52 +375,41 @@ if (debounceRef.current) {
       </header>
 
       {/* Filters */}
-      <section
-        style={{
-          marginTop: 16,
-          padding: 12,
-          border: "1px solid rgba(0,0,0,0.12)",
-          borderRadius: 10,
-          display: "grid",
-          gridTemplateColumns: "1fr 220px 140px 120px",
-          gap: 10,
-          alignItems: "end",
-        }}
-      >
-<label style={{ display: "grid", gap: 6 }}>
-  Search (company, role, notes)
-  <input
-    value={qInput}
-    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setQInput(e.target.value)}
-    onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        if (debounceRef.current) {
-  window.clearTimeout(debounceRef.current);
-  debounceRef.current = null;
-}
+      <section className="mt-4 grid grid-cols-1 gap-3 rounded-xl border border-slate-200 bg-white p-3 md:grid-cols-[1fr_220px_140px_120px] md:items-end">
+        <label className="grid gap-1.5 text-sm font-medium text-slate-700">
+          Search (company, role, notes)
+<input
+  value={qInput}
+  onChange={(e) => setQInput(e.target.value)}
+  onKeyDown={(e) => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    if (debounceRef.current) {
+      window.clearTimeout(debounceRef.current);
+      debounceRef.current = null;
+    }
+    setPage(1);
+    setQ(qInput);
+  }}
+  placeholder="e.g., Amazon"
+  disabled={loading}
+  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
+/>
+        </label>
 
-        setPage(1);
-        setQ(qInput);
-      }
-    }}
-    placeholder="e.g., Amazon"
-    style={{ padding: 10 }}
-  />
-</label>
-
-
-        <label style={{ display: "grid", gap: 6 }}>
+        <label className="grid gap-1.5 text-sm font-medium text-slate-700">
           Status
-          <select
-            value={status}
-            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
-              const v = e.target.value;
-              setStatus(v === "" ? "" : isApplicationStatus(v) ? v : "");
-              setPage(1);
-            }}
-            style={{ padding: 10 }}
-          >
+<select
+  value={status}
+  onChange={(e) => {
+    const v = e.target.value;
+    setStatus(v === "" ? "" : isApplicationStatus(v) ? v : "");
+    setPage(1);
+  }}
+  disabled={loading}
+  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
+>
+
             <option value="">All</option>
             {STATUS_OPTIONS.map((s) => (
               <option key={s} value={s}>
@@ -362,19 +419,21 @@ if (debounceRef.current) {
           </select>
         </label>
 
-        <label style={{ display: "grid", gap: 6 }}>
+        <label className="grid gap-1.5 text-sm font-medium text-slate-700">
           Page size
-          <select
-            value={pageSize}
-            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
-              const next = Number(e.target.value);
-              if ((PAGE_SIZES as readonly number[]).includes(next)) {
-                setPageSize(next as (typeof PAGE_SIZES)[number]);
-                setPage(1);
-              }
-            }}
-            style={{ padding: 10 }}
-          >
+<select
+  value={pageSize}
+  onChange={(e) => {
+    const next = Number(e.target.value);
+    if ((PAGE_SIZES as readonly number[]).includes(next)) {
+      setPageSize(next as (typeof PAGE_SIZES)[number]);
+      setPage(1);
+    }
+  }}
+  disabled={loading}
+  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
+>
+
             {PAGE_SIZES.map((n) => (
               <option key={n} value={n}>
                 {n}
@@ -383,47 +442,47 @@ if (debounceRef.current) {
           </select>
         </label>
 
-        <button onClick={applyFilters} style={{ padding: 10, cursor: "pointer" }}>
-          Apply
-        </button>
+<button
+  onClick={applyFilters}
+  disabled={loading}
+  className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800 active:bg-slate-950 disabled:opacity-50 disabled:cursor-not-allowed"
+>
+  Apply
+</button>
+
       </section>
 
-      {error && <div style={{ marginTop: 12, color: "crimson" }}>{error}</div>}
+      {error && <div className="mt-3 text-sm font-medium text-red-600">{error}</div>}
 
       {/* Table */}
-      <section style={{ marginTop: 14 }}>
-        <div
-          style={{
-            overflowX: "auto",
-            border: "1px solid rgba(0,0,0,0.12)",
-            borderRadius: 10,
-          }}
-        >
-          <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 900 }}>
+      <section className="mt-4">
+        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+          <table className="w-full min-w-[900px] border-collapse text-left text-sm">
             <thead>
-              <tr style={{ textAlign: "left", background: "rgba(0,0,0,0.04)" }}>
-                <th style={{ padding: 12 }}>Company</th>
-                <th style={{ padding: 12 }}>Role</th>
-                <th style={{ padding: 12 }}>Status</th>
-                <th style={{ padding: 12 }}>Updated</th>
-                <th style={{ padding: 12, width: 220 }}>Actions</th>
+              <tr className="bg-slate-50">
+                <th className="px-3 py-3 font-semibold text-slate-700">Company</th>
+                <th className="px-3 py-3 font-semibold text-slate-700">Role</th>
+                <th className="px-3 py-3 font-semibold text-slate-700">Status</th>
+                <th className="px-3 py-3 font-semibold text-slate-700">Updated</th>
+                <th className="px-3 py-3 font-semibold text-slate-700">Actions</th>
               </tr>
             </thead>
+
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={5} style={{ padding: 16 }}>
+                  <td colSpan={5} className="px-3 py-4 text-slate-600">
                     Loading…
                   </td>
                 </tr>
               ) : items.length === 0 ? (
                 <tr>
-                  <td colSpan={5} style={{ padding: 24 }}>
-                    <div style={{ display: "grid", gap: 10 }}>
-                      <div style={{ fontWeight: 600 }}>
+                  <td colSpan={5} className="px-3 py-6">
+                    <div className="grid gap-2">
+                      <div className="font-semibold text-slate-800">
                         {q.trim() || status ? "No matching results" : "No applications yet"}
                       </div>
-                      <div style={{ opacity: 0.75 }}>
+                      <div className="text-slate-500">
                         {q.trim() || status
                           ? "Try clearing filters or searching a different keyword."
                           : "Create your first application to start tracking companies, statuses, and notes."}
@@ -431,7 +490,7 @@ if (debounceRef.current) {
                       <div>
                         <button
                           onClick={openCreate}
-                          style={{ padding: "10px 12px", cursor: "pointer" }}
+                          className="mt-1 rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800"
                         >
                           + Create your first application
                         </button>
@@ -441,24 +500,33 @@ if (debounceRef.current) {
                 </tr>
               ) : (
                 items.map((row) => (
-                  <tr key={row.id} style={{ borderTop: "1px solid rgba(0,0,0,0.08)" }}>
-                    <td style={{ padding: 12 }}>{row.company}</td>
-                    <td style={{ padding: 12 }}>{row.roleTitle}</td>
-                    <td style={{ padding: 12 }}>{row.status}</td>
-                    <td style={{ padding: 12 }}>{formatUtc(row.updatedAtUtc)}</td>
-                    <td style={{ padding: 12, display: "flex", gap: 8 }}>
-                      <button
-                        onClick={() => openEdit(row)}
-                        style={{ padding: "8px 10px", cursor: "pointer" }}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => onDelete(row)}
-                        style={{ padding: "8px 10px", cursor: "pointer" }}
-                      >
-                        Delete
-                      </button>
+                  <tr key={row.id} className="border-t border-slate-100">
+                    <td className="px-3 py-3">{row.company}</td>
+                    <td className="px-3 py-3">{row.roleTitle}</td>
+                    <td className="px-3 py-3">
+                      <StatusBadge status={row.status} />
+                    </td>
+                    <td className="px-3 py-3 text-slate-600">{formatUtc(row.updatedAtUtc)}</td>
+                    <td className="px-3 py-3">
+                      <div className="flex gap-2">
+<button
+  onClick={() => openEdit(row)}
+  disabled={loading}
+  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+>
+  Edit
+</button>
+
+<button
+  onClick={() => openDeleteConfirm(row)}
+  disabled={loading}
+  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+>
+  Delete
+</button>
+
+
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -468,105 +536,156 @@ if (debounceRef.current) {
         </div>
 
         {/* Pagination */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginTop: 12,
-          }}
-        >
-          <div style={{ opacity: 0.75 }}>
+        <div className="mt-3 flex items-center justify-between">
+          <div className="text-sm text-slate-500">
             Page {page} of {totalPages}
           </div>
 
-          <div style={{ display: "flex", gap: 8 }}>
-            <button
-              onClick={() => setPage(1)}
-              disabled={page <= 1}
-              style={{ padding: "8px 10px" }}
-            >
-              First
-            </button>
-            <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page <= 1}
-              style={{ padding: "8px 10px" }}
-            >
-              Prev
-            </button>
-            <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page >= totalPages}
-              style={{ padding: "8px 10px" }}
-            >
-              Next
-            </button>
-            <button
-              onClick={() => setPage(totalPages)}
-              disabled={page >= totalPages}
-              style={{ padding: "8px 10px" }}
-            >
-              Last
-            </button>
+          <div className="flex gap-2">
+<button
+  onClick={() => setPage(1)}
+  disabled={loading || page <= 1}
+  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium enabled:hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+>
+  First
+</button>
+
+<button
+  onClick={() => setPage((p) => Math.max(1, p - 1))}
+  disabled={loading || page <= 1}
+  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium enabled:hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+>
+  Prev
+</button>
+
+<button
+  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+  disabled={loading || page >= totalPages}
+  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium enabled:hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+>
+  Next
+</button>
+
+<button
+  onClick={() => setPage(totalPages)}
+  disabled={loading || page >= totalPages}
+  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium enabled:hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+>
+  Last
+</button>
+
           </div>
         </div>
       </section>
 
-      {/* Modal */}
-      {showModal && (
+      {/* Delete confirm modal */}
+      {confirmDelete && (
         <div
           role="dialog"
           aria-modal="true"
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.45)",
-            display: "grid",
-            placeItems: "center",
-            padding: 16,
-          }}
-          onMouseDown={(e: React.MouseEvent<HTMLDivElement>) => {
-            if (e.target === e.currentTarget) closeModal();
+          className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) closeDeleteConfirm();
           }}
         >
-          <div style={{ width: "100%", maxWidth: 560, background: "#fff", borderRadius: 12, padding: 16 }}>
-            <h2 style={{ marginTop: 0 }}>{editing ? "Edit Application" : "New Application"}</h2>
+          <div className="w-full max-w-md rounded-2xl bg-white p-4 shadow-xl">
+            <h2 className="text-lg font-bold text-slate-900">Delete application?</h2>
 
-            <div style={{ display: "grid", gap: 10 }}>
-              <label style={{ display: "grid", gap: 6 }}>
+            <p className="mt-2 text-sm text-slate-600">
+              This will permanently delete{" "}
+              <span className="font-semibold text-slate-900">
+                {confirmDelete.company} — {confirmDelete.roleTitle}
+              </span>
+              .
+            </p>
+
+            <div className="mt-4 flex justify-end gap-2">
+<button
+  onClick={closeDeleteConfirm}
+  disabled={deleting}
+  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+>
+  Cancel
+</button>
+
+
+<button
+  onClick={async () => {
+    const row = confirmDelete;
+    setDeleting(true);
+    try {
+      closeDeleteConfirm();
+setConfirmDelete(null); // ✅ ensure state clears
+await onDelete(row);
+
+    } finally {
+      setDeleting(false);
+    }
+  }}
+  disabled={deleting}
+  className="rounded-lg bg-red-600 px-3 py-2 text-sm font-semibold text-white hover:bg-red-700 active:bg-red-800 disabled:opacity-50 disabled:cursor-not-allowed"
+>
+  {deleting ? "Deleting…" : "Delete"}
+</button>
+
+            </div>
+          </div>
+        </div>
+      )}
+
+{/* Create / Edit Application Modal */}
+{showModal && (
+  <div
+    role="dialog"
+    aria-modal="true"
+    className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4"
+    // ⛔ Prevent closing while saving
+    // ✅ Only close when clicking the backdrop (not the modal content)
+    onMouseDown={(e) => {
+      if (saving) return;
+      if (e.target === e.currentTarget) closeModal();
+    }}
+  >
+
+          <div className="w-full max-w-xl rounded-2xl bg-white p-4 shadow-xl">
+            <h2 className="text-xl font-bold">
+              {editing ? "Edit Application" : "New Application"}
+            </h2>
+
+            {editing && (
+              <div className="mt-1">
+                <StatusBadge status={form.status} />
+              </div>
+            )}
+
+            <div className="mt-4 grid gap-3">
+              <label className="grid gap-1.5 text-sm font-medium text-slate-700">
                 Company
                 <input
                   value={form.company}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setForm((p) => ({ ...p, company: e.target.value }))
-                  }
-                  style={{ padding: 10 }}
+                  onChange={(e) => setForm((p) => ({ ...p, company: e.target.value }))}
+                  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-200"
                 />
               </label>
 
-              <label style={{ display: "grid", gap: 6 }}>
+              <label className="grid gap-1.5 text-sm font-medium text-slate-700">
                 Role Title
                 <input
                   value={form.roleTitle}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setForm((p) => ({ ...p, roleTitle: e.target.value }))
-                  }
-                  style={{ padding: 10 }}
+                  onChange={(e) => setForm((p) => ({ ...p, roleTitle: e.target.value }))}
+                  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-200"
                 />
               </label>
 
-              <label style={{ display: "grid", gap: 6 }}>
+              <label className="grid gap-1.5 text-sm font-medium text-slate-700">
                 Status
                 <select
                   value={form.status}
-                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                  onChange={(e) => {
                     const v = e.target.value;
-                    if (isApplicationStatus(v)) {
-                      setForm((p) => ({ ...p, status: v }));
-                    }
+                    if (isApplicationStatus(v)) setForm((p) => ({ ...p, status: v }));
                   }}
-                  style={{ padding: 10 }}
+                  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-200"
                 >
                   {STATUS_OPTIONS.map((s) => (
                     <option key={s} value={s}>
@@ -576,24 +695,30 @@ if (debounceRef.current) {
                 </select>
               </label>
 
-              <label style={{ display: "grid", gap: 6 }}>
+              <label className="grid gap-1.5 text-sm font-medium text-slate-700">
                 Notes
                 <textarea
                   value={form.notes}
-                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                    setForm((p) => ({ ...p, notes: e.target.value }))
-                  }
+                  onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))}
                   rows={5}
-                  style={{ padding: 10, resize: "vertical" }}
+                  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-200"
                 />
               </label>
             </div>
 
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 14 }}>
-              <button onClick={closeModal} disabled={saving} style={{ padding: "10px 12px", cursor: "pointer" }}>
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                onClick={closeModal}
+                disabled={saving}
+                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium enabled:hover:bg-slate-50 disabled:opacity-50"
+              >
                 Cancel
               </button>
-              <button onClick={onSave} disabled={saving} style={{ padding: "10px 12px", cursor: "pointer" }}>
+              <button
+                onClick={onSave}
+                disabled={saving}
+                className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white enabled:hover:bg-slate-800 disabled:opacity-50"
+              >
                 {saving ? "Saving…" : "Save"}
               </button>
             </div>
@@ -601,5 +726,7 @@ if (debounceRef.current) {
         </div>
       )}
     </div>
-  );
+  </div>
+);
 }
+
