@@ -143,4 +143,6 @@ app.MapAuth();
 
 app.MapJobApps();
 
+app.MapAttachments();
+
 app.Run();
