@@ -371,6 +371,18 @@ const activeJob = useMemo(() => {
     setShowModal(true);
   }
 
+  function openCreateForLane(lane: BoardLane) {
+  setEditing(null);
+  setForm({
+    company: "",
+    roleTitle: "",
+    status: lane,
+    notes: "",
+  });
+  setShowModal(true);
+}
+
+
   function openEdit(row: JobAppDto) {
     setEditing(row);
     setForm({
@@ -703,10 +715,24 @@ return (
     id={laneDroppableId}
     className="min-w-0 rounded-2xl p-3 flex flex-col"
   >
-    <div className="mb-3 flex items-center justify-between">
-      <div className="font-semibold text-slate-900">{laneLabel(lane)}</div>
-      <div className="text-sm text-slate-500">{laneItems.length}</div>
-    </div>
+<div className="mb-3 flex items-center justify-between">
+  <div className="font-semibold text-slate-900">{laneLabel(lane)}</div>
+
+  <div className="flex items-center gap-2">
+    <div className="text-sm text-slate-500">{laneItems.length}</div>
+
+    <button
+      type="button"
+      onClick={() => openCreateForLane(lane)}
+      className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 active:bg-slate-100"
+      aria-label={`Create new application in ${laneLabel(lane)}`}
+      title="Add application"
+    >
+      +
+    </button>
+  </div>
+</div>
+
 
     <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
       <div className="space-y-2 overflow-y-auto flex-1 min-h-[120px]">
@@ -984,20 +1010,21 @@ return (
 
                 <label className="grid gap-1.5 text-sm font-medium text-slate-700">
                   Status
-                  <select
-                    value={form.status}
-                    onChange={(e) => {
-                      const v = e.target.value;
-                      if (isApplicationStatus(v)) setForm((p) => ({ ...p, status: v }));
-                    }}
-                    className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-200"
-                  >
-                    {STATUS_OPTIONS.map((s) => (
-                      <option key={s} value={s}>
-                        {s}
-                      </option>
-                    ))}
-                  </select>
+<select
+  value={form.status}
+  onChange={(e) => {
+    const v = e.target.value;
+    if (isApplicationStatus(v)) setForm((p) => ({ ...p, status: v }));
+  }}
+  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-slate-300 focus:ring-2 focus:ring-slate-200"
+>
+  {STATUS_OPTIONS.map((s) => (
+    <option key={s} value={s}>
+      {s === "Draft" ? "Wishlist" : s}
+    </option>
+  ))}
+</select>
+
                 </label>
 
                 <label className="grid gap-1.5 text-sm font-medium text-slate-700">
