@@ -22,7 +22,6 @@ RUN npm run build
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS api-build
 WORKDIR /src
 
-# Your csproj is in api/JobTracker.Api/JobTracker.Api.csproj
 COPY api/JobTracker.Api/JobTracker.Api.csproj ./api/JobTracker.Api/
 RUN dotnet restore ./api/JobTracker.Api/JobTracker.Api.csproj
 
