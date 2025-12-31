@@ -1,5 +1,5 @@
 # ---------- 1) Build React (Vite) ----------
-FROM node:18-alpine AS web-build
+FROM node:20-alpine AS web-build
 WORKDIR /src/jobtracker-web
 
 COPY jobtracker-web/package.json jobtracker-web/package-lock.json* ./
@@ -22,24 +22,22 @@ RUN npm run build
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS api-build
 WORKDIR /src
 
-COPY api/*.csproj ./api/
-RUN dotnet restore ./api/*.csproj
+# Your csproj is in api/JobTracker.Api/JobTracker.Api.csproj
+COPY api/JobTracker.Api/JobTracker.Api.csproj ./api/JobTracker.Api/
+RUN dotnet restore ./api/JobTracker.Api/JobTracker.Api.csproj
 
 COPY api/ ./api/
-RUN dotnet publish ./api/*.csproj -c Release -o /out
+RUN dotnet publish ./api/JobTracker.Api/JobTracker.Api.csproj -c Release -o /out
 
 
 # ---------- 3) Final runtime image ----------
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
 
-# Render provides PORT dynamically
 ENV ASPNETCORE_URLS=http://0.0.0.0:${PORT:-10000}
 
 COPY --from=api-build /out ./
 COPY --from=web-build /src/jobtracker-web/dist ./wwwroot
 
 EXPOSE 10000
-
-# ⬇️ CONFIRM THIS DLL NAME ⬇️
 ENTRYPOINT ["dotnet", "JobTracker.Api.dll"]
