@@ -1,12 +1,31 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
-
+import type React from "react";
 import { createJobApp, deleteJobApp, listJobApps, updateJobApp } from "../api/jobApps";
 import type { ApplicationStatus, JobAppDto } from "../api/jobApps";
 import AttachmentsCard from "../components/AttachmentsCard";
 import StatusBadge from "../components/StatusBadge";
 import { useAuth } from "../context/useAuth";
+
+import {
+  DndContext,
+  DragOverlay,
+  KeyboardSensor,
+  PointerSensor,
+  closestCorners,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  useSortable,
+  sortableKeyboardCoordinates,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { useDroppable } from "@dnd-kit/core";
+
 
 const PAGE_SIZES = [10, 25, 50, 100] as const;
 
@@ -22,6 +41,16 @@ const STATUS_OPTIONS: ApplicationStatus[] = [
   "Rejected",
   "Accepted",
 ];
+
+type BoardLane = "Draft" | "Applied" | "Interviewing" | "Offer";
+type ViewMode = "Board" | "Archive";
+
+const BOARD_LANES: BoardLane[] = ["Draft", "Applied", "Interviewing", "Offer"];
+
+function laneLabel(status: BoardLane) {
+  return status === "Draft" ? "Wishlist" : status;
+}
+
 
 type FormState = {
   company: string;
@@ -48,6 +77,96 @@ function parseIntOr(value: string | null, fallback: number): number {
   const n = Number(value);
   return Number.isFinite(n) && n > 0 ? n : fallback;
 }
+
+function cardId(appId: number) {
+  return `job:${appId}`;
+}
+
+function isCardId(id: string) {
+  return id.startsWith("job:");
+}
+
+function parseCardId(id: string) {
+  return Number(id.replace("job:", ""));
+}
+
+function LaneDroppable({
+  id,
+  children,
+  className,
+}: {
+  id: string;
+  children: React.ReactNode;
+  className: string;
+}) {
+  const { setNodeRef, isOver } = useDroppable({
+  id,
+  data: { type: "lane" as const },
+});
+
+
+  return (
+    <div ref={setNodeRef} className={[
+  className,
+  "transition-colors duration-150",
+  isOver ? "bg-slate-100 ring-2 ring-slate-300" : "bg-slate-50",
+].join(" ")}
+>
+      {children}
+    </div>
+  );
+}
+
+
+function SortableJobCard({
+  id,
+  company,
+  roleTitle,
+  updatedAtUtc,
+  onClick,
+}: {
+  id: string;
+  company: string;
+  roleTitle: string;
+  updatedAtUtc: string;
+  onClick: () => void;
+}) {
+const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+  id,
+  data: { type: "card" as const },
+});
+
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+
+  return (
+    <button
+      ref={setNodeRef}
+      style={style}
+      type="button"
+      onClick={() => {
+  if (isDragging) return;
+  onClick();
+}}
+
+      className={[
+        "w-full rounded-2xl border border-slate-200 bg-white p-3 text-left shadow-sm hover:bg-slate-50",
+        isDragging ? "opacity-60 ring-2 ring-slate-300" : "",
+      ].join(" ")}
+      {...attributes}
+      {...listeners}
+    >
+      <div className="truncate font-semibold text-slate-900">{company}</div>
+      <div className="truncate text-sm text-slate-600">{roleTitle}</div>
+      <div className="mt-2 text-xs text-slate-500">Updated {updatedAtUtc}</div>
+    </button>
+  );
+}
+
 
 export default function JobAppsPage() {
   const { logout, token } = useAuth();
@@ -92,6 +211,21 @@ export default function JobAppsPage() {
 
   const [items, setItems] = useState<JobAppDto[]>([]);
   const [total, setTotal] = useState(0);
+  const [view, setView] = useState<ViewMode>("Board");
+
+
+  const sensors = useSensors(
+  useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+  useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+);
+
+const [activeId, setActiveId] = useState<string | null>(null);
+const activeJob = useMemo(() => {
+  if (!activeId || !isCardId(activeId)) return null;
+  const jobId = parseCardId(activeId);
+  return items.find((x) => x.id === jobId) ?? null;
+}, [activeId, items]);
+
 
   // modal / form state
   const [showModal, setShowModal] = useState(false);
@@ -165,6 +299,19 @@ export default function JobAppsPage() {
 
     setSearchParams(next, { replace: true });
   }, [qCommitted, status, page, pageSize, setSearchParams]);
+
+  useEffect(() => {
+  if (view !== "Board") return;
+
+  // keep Board view broad so columns populate better
+  if (status !== "") setStatus("");
+  if (page !== 1) setPage(1);
+  const boardPageSize = PAGE_SIZES[PAGE_SIZES.length - 1]; // 100
+  if (pageSize !== boardPageSize) setPageSize(boardPageSize);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [view]);
+
 
   async function load() {
     setError(null);
@@ -248,6 +395,35 @@ export default function JobAppsPage() {
   function closeDeleteConfirm() {
     setConfirmDelete(null);
   }
+
+  async function moveToLane(jobId: number, nextLane: BoardLane) {
+  const job = items.find((x) => x.id === jobId);
+  if (!job) return;
+
+  // optimistic UI update
+  setItems((prev) => prev.map((x) => (x.id === jobId ? { ...x, status: nextLane } : x)));
+
+  try {
+    await updateJobApp(jobId, {
+      company: job.company ?? "",
+      roleTitle: job.roleTitle ?? "",
+      status: nextLane,
+      notes: job.notes ?? null,
+    });
+    toast.success(`Moved to ${laneLabel(nextLane)}.`);
+} catch {
+  // allow dnd-kit to animate snap-back
+  requestAnimationFrame(() => {
+    setItems((prev) =>
+      prev.map((x) => (x.id === jobId ? job : x))
+    );
+  });
+
+  toast.error("Move failed.");
+}
+
+}
+
 
   async function onSave() {
     const company = form.company.trim();
@@ -340,10 +516,6 @@ export default function JobAppsPage() {
     });
   }
 
-  function applyFilters() {
-    setPage(1);
-  }
-
   return (
     <div className="min-h-screen w-full bg-neutral-900">
       <div className="mx-auto max-w-5xl p-4 md:p-6">
@@ -356,7 +528,34 @@ export default function JobAppsPage() {
             </div>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
+            <div className="inline-flex overflow-hidden rounded-lg border border-slate-200 bg-white">
+              <button
+                type="button"
+                onClick={() => setView("Board")}
+                className={[
+                  "px-3 py-2 text-sm font-medium",
+                  view === "Board"
+                    ? "bg-slate-900 text-white"
+                    : "text-slate-700 hover:bg-slate-50",
+                ].join(" ")}
+              >
+                Board
+              </button>
+              <button
+                type="button"
+                onClick={() => setView("Archive")}
+                className={[
+                  "px-3 py-2 text-sm font-medium",
+                  view === "Archive"
+                    ? "bg-slate-900 text-white"
+                    : "text-slate-700 hover:bg-slate-50",
+                ].join(" ")}
+              >
+                Archive
+              </button>
+            </div>
+
             <button
               onClick={openCreate}
               disabled={loading || saving}
@@ -375,6 +574,7 @@ export default function JobAppsPage() {
               Sign out
             </button>
           </div>
+
         </header>
 
         {/* Filters */}
@@ -449,20 +649,114 @@ export default function JobAppsPage() {
               ))}
             </select>
           </label>
-
-          <button
-            onClick={applyFilters}
-            disabled={loading}
-            className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800 active:bg-slate-950 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            Apply
-          </button>
         </section>
 
         {error && <div className="mt-3 text-sm font-medium text-red-600">{error}</div>}
 
-        {/* Table */}
-        <section className="mt-4">
+        {/* Board (Kanban) */}
+{view === "Board" && (
+  <section className="mt-4 h-[calc(100vh-260px)]">
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCorners}
+      onDragStart={(e) => setActiveId(String(e.active.id))}
+      onDragCancel={() => setActiveId(null)}
+onDragEnd={(e) => {
+  const active = String(e.active.id);
+  const over = e.over ? String(e.over.id) : null;
+
+  setActiveId(null);
+
+  if (!over) return;
+  if (!isCardId(active)) return;
+
+  const jobId = parseCardId(active);
+
+  // if dropped on a lane container
+  if (over.startsWith("lane:")) {
+    const nextLane = over.replace("lane:", "") as BoardLane;
+    void moveToLane(jobId, nextLane);
+    return;
+  }
+
+  // if dropped on another card, move into that card's lane
+  if (isCardId(over)) {
+    const overJobId = parseCardId(over);
+    const overJob = items.find((x) => x.id === overJobId);
+    if (!overJob) return;
+
+    const nextLane = overJob.status as BoardLane;
+    void moveToLane(jobId, nextLane);
+  }
+}}
+
+    >
+      <div className="grid gap-4 rounded-xl border border-slate-200 bg-white p-3 grid-cols-1 md:grid-cols-2 xl:grid-cols-4">
+        {BOARD_LANES.map((lane) => {
+          const laneItems = items.filter((x) => x.status === lane);
+          const laneDroppableId = `lane:${lane}`;
+          const sortableIds = laneItems.map((x) => cardId(x.id));
+
+return (
+  <LaneDroppable
+    key={lane}
+    id={laneDroppableId}
+    className="min-w-0 rounded-2xl p-3 flex flex-col"
+  >
+    <div className="mb-3 flex items-center justify-between">
+      <div className="font-semibold text-slate-900">{laneLabel(lane)}</div>
+      <div className="text-sm text-slate-500">{laneItems.length}</div>
+    </div>
+
+    <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
+      <div className="space-y-2 overflow-y-auto flex-1 min-h-[120px]">
+        {loading || isFetching ? (
+          <div className="rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-600">
+            Loading…
+          </div>
+        ) : laneItems.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-slate-300 bg-white p-3 text-sm text-slate-600">
+            No applications here yet.
+          </div>
+        ) : (
+          laneItems.map((row) => (
+            <SortableJobCard
+              key={row.id}
+              id={cardId(row.id)}
+              company={row.company}
+              roleTitle={row.roleTitle}
+              updatedAtUtc={formatUtc(row.updatedAtUtc)}
+              onClick={() => openEdit(row)}
+            />
+          ))
+        )}
+      </div>
+    </SortableContext>
+  </LaneDroppable>
+);
+
+
+
+        })}
+      </div>
+
+      <DragOverlay>
+        {activeJob ? (
+          <div className="w-[280px] rounded-2xl border border-slate-200 bg-white p-3 text-left shadow-lg">
+            <div className="truncate font-semibold text-slate-900">{activeJob.company}</div>
+            <div className="truncate text-sm text-slate-600">{activeJob.roleTitle}</div>
+          </div>
+        ) : null}
+      </DragOverlay>
+    </DndContext>
+  </section>
+)}
+
+
+{view === "Archive" && (
+  <>
+    {/* Table */}
+    <section className="mt-4 h-[calc(100vh-260px)]">
           <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
             <table className="w-full min-w-[900px] border-collapse text-left text-sm">
               <thead>
@@ -593,6 +887,8 @@ export default function JobAppsPage() {
             </div>
           </div>
         </section>
+      </>
+)}
 
         {/* Delete confirm modal */}
         {confirmDelete && (
