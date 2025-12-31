@@ -141,3 +141,7 @@ C:\Users\Maximo\Documents\JobTracker\api\Jobtracker.Api\obj\Debug\net8.0\ref\Job
 C:\Users\Maximo\Documents\JobTracker\api\JobTracker.Api\obj\Debug\net8.0\JobTracker.Api.sourcelink.json
 C:\Users\Maximo\Documents\JobTracker\api\JobTracker.Api\bin\Debug\net8.0\AWSSDK.Core.dll
 C:\Users\Maximo\Documents\JobTracker\api\JobTracker.Api\bin\Debug\net8.0\AWSSDK.S3.dll
+C:\Users\Maximo\Documents\JobTracker\api\JobTracker.Api\bin\Debug\net8.0\package-lock.json
+C:\Users\Maximo\Documents\JobTracker\api\JobTracker.Api\bin\Debug\net8.0\package.json
+C:\Users\Maximo\Documents\JobTracker\api\JobTracker.Api\bin\Debug\net8.0\Npgsql.dll
+C:\Users\Maximo\Documents\JobTracker\api\JobTracker.Api\bin\Debug\net8.0\Npgsql.EntityFrameworkCore.PostgreSQL.dll

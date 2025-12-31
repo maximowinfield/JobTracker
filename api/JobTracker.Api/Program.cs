@@ -26,9 +26,22 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 // ----- Database -----
 builder.Services.AddDbContext<AppDbContext>(opt =>
 {
-    var cs = builder.Configuration.GetConnectionString("Default") ?? "Data Source=app.db";
-    opt.UseSqlite(cs);
+    var cs = builder.Configuration.GetConnectionString("Default");
+
+    // If Render Postgres is configured, the connection string will start with "Host=" or "postgres"
+    if (!string.IsNullOrWhiteSpace(cs) &&
+        (cs.Contains("Host=", StringComparison.OrdinalIgnoreCase) ||
+         cs.StartsWith("postgres", StringComparison.OrdinalIgnoreCase)))
+    {
+        opt.UseNpgsql(cs);
+    }
+    else
+    {
+        // Local dev fallback
+        opt.UseSqlite(cs ?? "Data Source=app.db");
+    }
 });
+
 
 
 // ================================
@@ -119,6 +132,17 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.Migrate();
+}
+
+
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
+
 app.MapGet("/api/debug/header", (HttpContext ctx) =>
 {
     return Results.Ok(new
@@ -171,5 +195,7 @@ app.MapAuth();
 app.MapJobApps();
 
 app.MapAttachments();
+
+app.MapFallbackToFile("index.html");
 
 app.Run();
