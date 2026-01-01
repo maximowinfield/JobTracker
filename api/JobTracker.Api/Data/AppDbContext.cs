@@ -25,7 +25,8 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<AppUser>()
             .Property(u => u.CreatedAtUtc)
-            .HasColumnType("timestamptz");
+            .HasColumnType("timestamptz")
+            .IsRequired();
 
         // -----------------------------
         // JobApplication
@@ -38,12 +39,15 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<JobApplication>()
             .Property(j => j.CreatedAtUtc)
-            .HasColumnType("timestamptz");
+            .HasColumnType("timestamptz")
+            .IsRequired();
 
         modelBuilder.Entity<JobApplication>()
             .Property(j => j.UpdatedAtUtc)
-            .HasColumnType("timestamptz");
+            .HasColumnType("timestamptz")
+            .IsRequired();
 
+        // Indexes for list/search/status queries
         modelBuilder.Entity<JobApplication>()
             .HasIndex(j => new { j.UserId, j.UpdatedAtUtc });
 
@@ -73,8 +77,6 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Attachment>()
             .Property(a => a.DeletedAtUtc)
             .HasColumnType("timestamptz"); // nullable
-
-
     }
 
     // -----------------------------
@@ -94,6 +96,7 @@ public class AppDbContext : DbContext
 
     private void NormalizeUtcDateTimes()
     {
+        // Keep JobApplication created/updated timestamps consistent
         foreach (var entry in ChangeTracker.Entries<JobApplication>())
         {
             if (entry.State == EntityState.Added)
@@ -107,6 +110,7 @@ public class AppDbContext : DbContext
             }
         }
 
+        // Ensure all DateTime / DateTime? values are stored as UTC
         foreach (var entry in ChangeTracker.Entries())
         {
             if (entry.State is not (EntityState.Added or EntityState.Modified)) continue;
@@ -117,7 +121,6 @@ public class AppDbContext : DbContext
                 if (t != typeof(DateTime) && t != typeof(DateTime?)) continue;
 
                 if (prop.CurrentValue is not DateTime dt) continue;
-
 
                 if (dt.Kind == DateTimeKind.Unspecified)
                     prop.CurrentValue = DateTime.SpecifyKind(dt, DateTimeKind.Utc);
