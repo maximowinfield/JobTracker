@@ -8,17 +8,18 @@ namespace JobTracker.Api.Migrations
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            // Clean invalid/quoted date strings BEFORE converting.
-            // This specifically handles values like: '', '""', '"', ' null ', '"2025-01-01T00:00:00Z"', etc.
+            // 1) Clean invalid/quoted date strings ONLY when the column is TEXT
             migrationBuilder.Sql("""
 DO $$
+DECLARE users_created_type text;
+DECLARE jobs_created_type text;
+DECLARE jobs_updated_type text;
 BEGIN
-  -- Users.CreatedAtUtc cleanup (only meaningful if the column is text)
-  IF EXISTS (
-    SELECT 1
-    FROM information_schema.columns
-    WHERE table_name = 'Users' AND column_name = 'CreatedAtUtc'
-  ) THEN
+  SELECT data_type INTO users_created_type
+  FROM information_schema.columns
+  WHERE table_schema = 'public' AND table_name = 'Users' AND column_name = 'CreatedAtUtc';
+
+  IF users_created_type = 'text' THEN
     UPDATE "Users"
     SET "CreatedAtUtc" = NULL
     WHERE "CreatedAtUtc" IS NOT NULL
@@ -28,12 +29,11 @@ BEGIN
       );
   END IF;
 
-  -- JobApplications.CreatedAtUtc cleanup
-  IF EXISTS (
-    SELECT 1
-    FROM information_schema.columns
-    WHERE table_name = 'JobApplications' AND column_name = 'CreatedAtUtc'
-  ) THEN
+  SELECT data_type INTO jobs_created_type
+  FROM information_schema.columns
+  WHERE table_schema = 'public' AND table_name = 'JobApplications' AND column_name = 'CreatedAtUtc';
+
+  IF jobs_created_type = 'text' THEN
     UPDATE "JobApplications"
     SET "CreatedAtUtc" = NULL
     WHERE "CreatedAtUtc" IS NOT NULL
@@ -43,12 +43,11 @@ BEGIN
       );
   END IF;
 
-  -- JobApplications.UpdatedAtUtc cleanup
-  IF EXISTS (
-    SELECT 1
-    FROM information_schema.columns
-    WHERE table_name = 'JobApplications' AND column_name = 'UpdatedAtUtc'
-  ) THEN
+  SELECT data_type INTO jobs_updated_type
+  FROM information_schema.columns
+  WHERE table_schema = 'public' AND table_name = 'JobApplications' AND column_name = 'UpdatedAtUtc';
+
+  IF jobs_updated_type = 'text' THEN
     UPDATE "JobApplications"
     SET "UpdatedAtUtc" = NULL
     WHERE "UpdatedAtUtc" IS NOT NULL
@@ -60,7 +59,7 @@ BEGIN
 END $$;
 """);
 
-            // Convert Users.CreatedAtUtc -> timestamptz (treat values as UTC)
+            // 2) Convert Users.CreatedAtUtc -> timestamptz (treat values as UTC)
             migrationBuilder.Sql("""
 ALTER TABLE "Users"
 ALTER COLUMN "CreatedAtUtc" TYPE timestamptz
@@ -75,7 +74,7 @@ USING (
 );
 """);
 
-            // Convert JobApplications.CreatedAtUtc -> timestamptz
+            // 3) Convert JobApplications.CreatedAtUtc -> timestamptz
             migrationBuilder.Sql("""
 ALTER TABLE "JobApplications"
 ALTER COLUMN "CreatedAtUtc" TYPE timestamptz
@@ -90,7 +89,7 @@ USING (
 );
 """);
 
-            // Convert JobApplications.UpdatedAtUtc -> timestamptz
+            // 4) Convert JobApplications.UpdatedAtUtc -> timestamptz
             migrationBuilder.Sql("""
 ALTER TABLE "JobApplications"
 ALTER COLUMN "UpdatedAtUtc" TYPE timestamptz
@@ -108,7 +107,6 @@ USING (
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            // Revert to timestamp without time zone
             migrationBuilder.Sql("""
 ALTER TABLE "Users"
 ALTER COLUMN "CreatedAtUtc" TYPE timestamp
