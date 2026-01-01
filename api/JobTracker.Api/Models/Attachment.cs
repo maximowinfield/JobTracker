@@ -15,5 +15,6 @@ public class Attachment
     // S3 object key later (e.g., "users/12/apps/99/resume.pdf")
     public string StorageKey { get; set; } = "";
 
+    public DateTime? DeletedAtUtc { get; set; }
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
 }

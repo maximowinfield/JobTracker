@@ -138,10 +138,12 @@ public static class AttachmentEndpoints
             if (!ownsApp) return Results.NotFound();
 
             var attachments = await db.Attachments
-                .Where(a => a.JobApplicationId == jobAppId)
+                .Where(a => a.JobApplicationId == jobAppId
+                         && a.JobApplication!.UserId == userId)
                 .OrderByDescending(a => a.CreatedAtUtc)
                 .Select(a => ToDto(a))
                 .ToListAsync();
+
 
             return Results.Ok(attachments);
         });
