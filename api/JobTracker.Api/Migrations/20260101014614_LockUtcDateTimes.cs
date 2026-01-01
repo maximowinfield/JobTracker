@@ -5,63 +5,69 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace JobTracker.Api.Migrations
 {
-    /// <inheritdoc />
     public partial class LockUtcDateTimes : Migration
     {
-        /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AlterColumn<DateTime>(
-                name: "CreatedAtUtc",
-                table: "Users",
-                type: "timestamptz",
-                nullable: false,
-                oldClrType: typeof(DateTime),
-                oldType: "TEXT");
+            // Users.CreatedAtUtc -> timestamptz
+            // Handles TEXT or timestamp-ish previous types safely.
+            migrationBuilder.Sql("""
+ALTER TABLE "Users"
+ALTER COLUMN "CreatedAtUtc" TYPE timestamptz
+USING (
+  CASE
+    WHEN pg_typeof("CreatedAtUtc")::text = 'text' THEN ("CreatedAtUtc")::timestamp AT TIME ZONE 'UTC'
+    ELSE ("CreatedAtUtc") AT TIME ZONE 'UTC'
+  END
+);
+""");
 
-            migrationBuilder.AlterColumn<DateTime>(
-                name: "UpdatedAtUtc",
-                table: "JobApplications",
-                type: "timestamptz",
-                nullable: false,
-                oldClrType: typeof(DateTime),
-                oldType: "TEXT");
+            // JobApplications.CreatedAtUtc -> timestamptz
+            migrationBuilder.Sql("""
+ALTER TABLE "JobApplications"
+ALTER COLUMN "CreatedAtUtc" TYPE timestamptz
+USING (
+  CASE
+    WHEN pg_typeof("CreatedAtUtc")::text = 'text' THEN ("CreatedAtUtc")::timestamp AT TIME ZONE 'UTC'
+    ELSE ("CreatedAtUtc") AT TIME ZONE 'UTC'
+  END
+);
+""");
 
-            migrationBuilder.AlterColumn<DateTime>(
-                name: "CreatedAtUtc",
-                table: "JobApplications",
-                type: "timestamptz",
-                nullable: false,
-                oldClrType: typeof(DateTime),
-                oldType: "TEXT");
+            // JobApplications.UpdatedAtUtc -> timestamptz
+            migrationBuilder.Sql("""
+ALTER TABLE "JobApplications"
+ALTER COLUMN "UpdatedAtUtc" TYPE timestamptz
+USING (
+  CASE
+    WHEN pg_typeof("UpdatedAtUtc")::text = 'text' THEN ("UpdatedAtUtc")::timestamp AT TIME ZONE 'UTC'
+    ELSE ("UpdatedAtUtc") AT TIME ZONE 'UTC'
+  END
+);
+""");
         }
 
-        /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AlterColumn<DateTime>(
-                name: "CreatedAtUtc",
-                table: "Users",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(DateTime),
-                oldType: "timestamptz");
+            // Revert to timestamp without time zone (or text if you truly want TEXT again).
+            // I'd recommend timestamp (without tz) as the "Down" target rather than TEXT.
+            migrationBuilder.Sql("""
+ALTER TABLE "Users"
+ALTER COLUMN "CreatedAtUtc" TYPE timestamp
+USING ("CreatedAtUtc" AT TIME ZONE 'UTC');
+""");
 
-            migrationBuilder.AlterColumn<DateTime>(
-                name: "UpdatedAtUtc",
-                table: "JobApplications",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(DateTime),
-                oldType: "timestamptz");
+            migrationBuilder.Sql("""
+ALTER TABLE "JobApplications"
+ALTER COLUMN "CreatedAtUtc" TYPE timestamp
+USING ("CreatedAtUtc" AT TIME ZONE 'UTC');
+""");
 
-            migrationBuilder.AlterColumn<DateTime>(
-                name: "CreatedAtUtc",
-                table: "JobApplications",
-                type: "TEXT",
-                nullable: false,
-                oldClrType: typeof(DateTime),
-                oldType: "timestamptz");
+            migrationBuilder.Sql("""
+ALTER TABLE "JobApplications"
+ALTER COLUMN "UpdatedAtUtc" TYPE timestamp
+USING ("UpdatedAtUtc" AT TIME ZONE 'UTC');
+""");
         }
     }
 }
