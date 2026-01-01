@@ -30,13 +30,15 @@ export type PagedResult<T> = {
   pageSize: number;
 };
 
+const JOB_APPS_PATH = "/job-apps";
+
 export async function listJobApps(params: {
   q?: string;
   status?: ApplicationStatus;
   page?: number;
   pageSize?: number;
 }) {
-  const res = await api.get<PagedResult<JobAppDto>>("/api/job-apps", { params });
+  const res = await api.get<PagedResult<JobAppDto>>(JOB_APPS_PATH, { params });
   return res.data;
 }
 
@@ -46,7 +48,7 @@ export async function createJobApp(payload: {
   status?: ApplicationStatus;
   notes?: string | null;
 }) {
-  const res = await api.post<JobAppDto>("/api/job-apps", payload);
+  const res = await api.post<JobAppDto>(JOB_APPS_PATH, payload);
   return res.data;
 }
 
@@ -59,10 +61,10 @@ export async function updateJobApp(
     notes: string | null;
   }>
 ) {
-  const res = await api.patch<JobAppDto>(`/api/job-apps/${id}`, payload);
+  const res = await api.patch<JobAppDto>(`${JOB_APPS_PATH}/${id}`, payload);
   return res.data;
 }
 
 export async function deleteJobApp(id: number) {
-  await api.delete(`/api/job-apps/${id}`);
+  await api.delete(`${JOB_APPS_PATH}/${id}`);
 }
