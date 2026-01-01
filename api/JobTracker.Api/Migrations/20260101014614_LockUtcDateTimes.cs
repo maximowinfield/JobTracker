@@ -8,38 +8,47 @@ namespace JobTracker.Api.Migrations
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            // Users.CreatedAtUtc
             migrationBuilder.Sql("""
 ALTER TABLE "Users"
 ALTER COLUMN "CreatedAtUtc" TYPE timestamptz
 USING (
   CASE
-    WHEN pg_typeof("CreatedAtUtc")::text = 'text'
-      THEN ("CreatedAtUtc")::timestamp AT TIME ZONE 'UTC'
-    ELSE ("CreatedAtUtc") AT TIME ZONE 'UTC'
+    WHEN "CreatedAtUtc" IS NULL THEN NULL
+    WHEN pg_typeof("CreatedAtUtc")::text = 'timestamp with time zone' THEN "CreatedAtUtc"
+    WHEN pg_typeof("CreatedAtUtc")::text = 'timestamp without time zone' THEN ("CreatedAtUtc" AT TIME ZONE 'UTC')
+    WHEN pg_typeof("CreatedAtUtc")::text = 'text' THEN (NULLIF("CreatedAtUtc",'')::timestamp AT TIME ZONE 'UTC')
+    ELSE ("CreatedAtUtc"::timestamp AT TIME ZONE 'UTC')
   END
 );
 """);
 
+            // JobApplications.CreatedAtUtc
             migrationBuilder.Sql("""
 ALTER TABLE "JobApplications"
 ALTER COLUMN "CreatedAtUtc" TYPE timestamptz
 USING (
   CASE
-    WHEN pg_typeof("CreatedAtUtc")::text = 'text'
-      THEN ("CreatedAtUtc")::timestamp AT TIME ZONE 'UTC'
-    ELSE ("CreatedAtUtc") AT TIME ZONE 'UTC'
+    WHEN "CreatedAtUtc" IS NULL THEN NULL
+    WHEN pg_typeof("CreatedAtUtc")::text = 'timestamp with time zone' THEN "CreatedAtUtc"
+    WHEN pg_typeof("CreatedAtUtc")::text = 'timestamp without time zone' THEN ("CreatedAtUtc" AT TIME ZONE 'UTC')
+    WHEN pg_typeof("CreatedAtUtc")::text = 'text' THEN (NULLIF("CreatedAtUtc",'')::timestamp AT TIME ZONE 'UTC')
+    ELSE ("CreatedAtUtc"::timestamp AT TIME ZONE 'UTC')
   END
 );
 """);
 
+            // JobApplications.UpdatedAtUtc
             migrationBuilder.Sql("""
 ALTER TABLE "JobApplications"
 ALTER COLUMN "UpdatedAtUtc" TYPE timestamptz
 USING (
   CASE
-    WHEN pg_typeof("UpdatedAtUtc")::text = 'text'
-      THEN ("UpdatedAtUtc")::timestamp AT TIME ZONE 'UTC'
-    ELSE ("UpdatedAtUtc") AT TIME ZONE 'UTC'
+    WHEN "UpdatedAtUtc" IS NULL THEN NULL
+    WHEN pg_typeof("UpdatedAtUtc")::text = 'timestamp with time zone' THEN "UpdatedAtUtc"
+    WHEN pg_typeof("UpdatedAtUtc")::text = 'timestamp without time zone' THEN ("UpdatedAtUtc" AT TIME ZONE 'UTC')
+    WHEN pg_typeof("UpdatedAtUtc")::text = 'text' THEN (NULLIF("UpdatedAtUtc",'')::timestamp AT TIME ZONE 'UTC')
+    ELSE ("UpdatedAtUtc"::timestamp AT TIME ZONE 'UTC')
   END
 );
 """);
