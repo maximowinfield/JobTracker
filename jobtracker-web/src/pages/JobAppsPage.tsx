@@ -346,6 +346,7 @@ async function load() {
       pageSize,
     });
 
+    // ignore stale responses
     if (seq !== loadSeq.current) return;
 
     const data = res as unknown as JobAppsResponseShape;
@@ -376,15 +377,17 @@ async function load() {
     setError("Failed to load job applications.");
     toast.error("Failed to load applications.");
   } finally {
-    // do cleanup ONLY if this is the latest request
-    if (seq !== loadSeq.current)
-
-    clearLoadToastTimer();
-    dismissLoadToast();
-    setLoading(false);
-    setIsFetching(false);
+    // ✅ only cleanup if this is still the latest request
+    if (seq === loadSeq.current) {
+      clearLoadToastTimer();
+      dismissLoadToast();
+      setLoading(false);
+      setIsFetching(false);
+    }
   }
 }
+
+
 
 useEffect(() => {
   void load();
