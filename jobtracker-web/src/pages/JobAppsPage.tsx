@@ -196,6 +196,8 @@ export default function JobAppsPage() {
   const loadToastIdRef = useRef<string | null>(null);
   const loadToastTimerRef = useRef<number | null>(null);
 
+  const loadSeq = useRef(0);
+
   function clearLoadToastTimer() {
     if (loadToastTimerRef.current) {
       window.clearTimeout(loadToastTimerRef.current);
@@ -321,74 +323,76 @@ const activeJob = useMemo(() => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
 }, [view]);
 
+async function load() {
+  const seq = ++loadSeq.current;
+  setError(null);
 
-  async function load() {
-    setError(null);
+  const isFirstLoad = items.length === 0 && total === 0;
+  if (isFirstLoad) setLoading(true);
+  else setIsFetching(true);
 
-    // If we've never loaded anything yet, show "loading" screen.
-    // Otherwise, do a background fetch that doesn't disable inputs.
-    const isFirstLoad = items.length === 0 && total === 0;
-    if (isFirstLoad) setLoading(true);
-    else setIsFetching(true);
+  clearLoadToastTimer();
+  dismissLoadToast();
+
+  loadToastTimerRef.current = window.setTimeout(() => {
+    loadToastIdRef.current = toast.loading("Loading applications…");
+  }, 500);
+
+  try {
+    const res = await listJobApps({
+      q: qCommitted ? qCommitted : undefined,
+      status: status || undefined,
+      page,
+      pageSize,
+    });
+
+    if (seq !== loadSeq.current) return;
+
+    const data = res as unknown as JobAppsResponseShape;
+
+    const nextItems = Array.isArray(data.items) ? (data.items as JobAppDto[]) : [];
+
+    const nextTotal =
+      typeof data.total === "number"
+        ? data.total
+        : typeof data.total === "string" && Number.isFinite(Number(data.total))
+          ? Number(data.total)
+          : nextItems.length;
+
+    setItems(nextItems);
+    setTotal(nextTotal);
+  } catch (err: unknown) {
+    if (seq !== loadSeq.current) return;
+
+    const maybeAxiosErr = err as { response?: { status?: number } } | null;
+    const code = maybeAxiosErr?.response?.status;
+
+    if (code === 401) {
+      logout();
+      navigate("/login", { replace: true });
+      return;
+    }
+
+    setError("Failed to load job applications.");
+    toast.error("Failed to load applications.");
+  } finally {
+    // do cleanup ONLY if this is the latest request
+    if (seq !== loadSeq.current)
 
     clearLoadToastTimer();
     dismissLoadToast();
-
-    // Only show loading toast if request takes >500ms
-    loadToastTimerRef.current = window.setTimeout(() => {
-      loadToastIdRef.current = toast.loading("Loading applications…");
-    }, 500);
-
-    try {
-      const res = await listJobApps({
-        q: qCommitted ? qCommitted : undefined,
-        status: status || undefined,
-        page,
-        pageSize,
-      });
-
-const data = res as unknown as JobAppsResponseShape;
-
-const nextItems = Array.isArray(data.items) ? (data.items as JobAppDto[]) : [];
-
-const nextTotal =
-  typeof data.total === "number"
-    ? data.total
-    : typeof data.total === "string" && Number.isFinite(Number(data.total))
-      ? Number(data.total)
-      : nextItems.length;
-
-setItems(nextItems);
-setTotal(nextTotal);
-
-
-      setItems(nextItems);
-      setTotal(nextTotal);
-
-    } catch (err: unknown) {
-      const maybeAxiosErr = err as { response?: { status?: number } } | null;
-      const code = maybeAxiosErr?.response?.status;
-
-      if (code === 401) {
-        logout();
-        navigate("/login", { replace: true });
-        return;
-      }
-
-      setError("Failed to load job applications.");
-      toast.error("Failed to load applications.");
-    } finally {
-      clearLoadToastTimer();
-      dismissLoadToast();
-      setLoading(false);
-      setIsFetching(false);
-    }
+    setLoading(false);
+    setIsFetching(false);
   }
+}
 
-  useEffect(() => {
-    void load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [qCommitted, status, page, pageSize]);
+useEffect(() => {
+  void load();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [qCommitted, status, page, pageSize]);
+
+
+
 
   function openCreate() {
     setEditing(null);
