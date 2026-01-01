@@ -64,6 +64,17 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<Attachment>()
             .HasIndex(a => a.JobApplicationId);
+
+        modelBuilder.Entity<Attachment>()
+            .Property(a => a.CreatedAtUtc)
+            .HasColumnType("timestamptz")
+            .IsRequired();
+
+        modelBuilder.Entity<Attachment>()
+            .Property(a => a.DeletedAtUtc)
+            .HasColumnType("timestamptz"); // nullable
+
+
     }
 
     // -----------------------------
@@ -102,8 +113,11 @@ public class AppDbContext : DbContext
 
             foreach (var prop in entry.Properties)
             {
-                if (prop.Metadata.ClrType != typeof(DateTime)) continue;
+                var t = prop.Metadata.ClrType;
+                if (t != typeof(DateTime) && t != typeof(DateTime?)) continue;
+
                 if (prop.CurrentValue is not DateTime dt) continue;
+
 
                 if (dt.Kind == DateTimeKind.Unspecified)
                     prop.CurrentValue = DateTime.SpecifyKind(dt, DateTimeKind.Utc);
