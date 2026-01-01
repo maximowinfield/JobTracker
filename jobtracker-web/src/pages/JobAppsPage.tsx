@@ -45,6 +45,9 @@ const STATUS_OPTIONS: ApplicationStatus[] = [
 type BoardLane = "Draft" | "Applied" | "Interviewing" | "Offer";
 type ViewMode = "Board" | "Archive";
 
+
+
+
 const BOARD_LANES: BoardLane[] = ["Draft", "Applied", "Interviewing", "Offer"];
 
 function laneLabel(status: BoardLane) {
@@ -89,6 +92,12 @@ function isCardId(id: string) {
 function parseCardId(id: string) {
   return Number(id.replace("job:", ""));
 }
+
+type JobAppsResponseShape = {
+  items?: unknown;
+  total?: unknown;
+};
+
 
 function LaneDroppable({
   id,
@@ -338,8 +347,24 @@ const activeJob = useMemo(() => {
         pageSize,
       });
 
-      setItems(res.items);
-      setTotal(res.total);
+const data = res as unknown as JobAppsResponseShape;
+
+const nextItems = Array.isArray(data.items) ? (data.items as JobAppDto[]) : [];
+
+const nextTotal =
+  typeof data.total === "number"
+    ? data.total
+    : typeof data.total === "string" && Number.isFinite(Number(data.total))
+      ? Number(data.total)
+      : nextItems.length;
+
+setItems(nextItems);
+setTotal(nextTotal);
+
+
+      setItems(nextItems);
+      setTotal(nextTotal);
+
     } catch (err: unknown) {
       const maybeAxiosErr = err as { response?: { status?: number } } | null;
       const code = maybeAxiosErr?.response?.status;
@@ -705,7 +730,7 @@ onDragEnd={(e) => {
     >
       <div className="grid gap-4 rounded-xl border border-slate-200 bg-white p-3 grid-cols-1 md:grid-cols-2 xl:grid-cols-4">
         {BOARD_LANES.map((lane) => {
-          const laneItems = items.filter((x) => x.status === lane);
+          const laneItems = (items ?? []).filter((x) => x.status === lane);
           const laneDroppableId = `lane:${lane}`;
           const sortableIds = laneItems.map((x) => cardId(x.id));
 
