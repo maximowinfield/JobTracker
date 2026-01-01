@@ -5,7 +5,7 @@ export type AuthResponse = {
 };
 
 export async function login(email: string, password: string) {
-  const res = await api.post<AuthResponse>("/api/auth/login", {
+  const res = await api.post<AuthResponse>("/auth/login", {
     email,
     password,
   });
@@ -13,7 +13,7 @@ export async function login(email: string, password: string) {
 }
 
 export async function register(email: string, password: string) {
-  const res = await api.post<AuthResponse>("/api/auth/register", {
+  const res = await api.post<AuthResponse>("/auth/register", {
     email,
     password,
   });
