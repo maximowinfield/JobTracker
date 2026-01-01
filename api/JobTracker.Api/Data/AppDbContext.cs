@@ -44,7 +44,6 @@ public class AppDbContext : DbContext
             .Property(j => j.UpdatedAtUtc)
             .HasColumnType("timestamptz");
 
-        // Indexes for list/search/status queries
         modelBuilder.Entity<JobApplication>()
             .HasIndex(j => new { j.UserId, j.UpdatedAtUtc });
 
@@ -65,5 +64,52 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<Attachment>()
             .HasIndex(a => a.JobApplicationId);
+    }
+
+    // -----------------------------
+    // UTC enforcement + auto timestamps
+    // -----------------------------
+    public override int SaveChanges()
+    {
+        NormalizeUtcDateTimes();
+        return base.SaveChanges();
+    }
+
+    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        NormalizeUtcDateTimes();
+        return base.SaveChangesAsync(cancellationToken);
+    }
+
+    private void NormalizeUtcDateTimes()
+    {
+        foreach (var entry in ChangeTracker.Entries<JobApplication>())
+        {
+            if (entry.State == EntityState.Added)
+            {
+                entry.Entity.CreatedAtUtc = DateTime.UtcNow;
+                entry.Entity.UpdatedAtUtc = DateTime.UtcNow;
+            }
+            else if (entry.State == EntityState.Modified)
+            {
+                entry.Entity.UpdatedAtUtc = DateTime.UtcNow;
+            }
+        }
+
+        foreach (var entry in ChangeTracker.Entries())
+        {
+            if (entry.State is not (EntityState.Added or EntityState.Modified)) continue;
+
+            foreach (var prop in entry.Properties)
+            {
+                if (prop.Metadata.ClrType != typeof(DateTime)) continue;
+                if (prop.CurrentValue is not DateTime dt) continue;
+
+                if (dt.Kind == DateTimeKind.Unspecified)
+                    prop.CurrentValue = DateTime.SpecifyKind(dt, DateTimeKind.Utc);
+                else if (dt.Kind == DateTimeKind.Local)
+                    prop.CurrentValue = dt.ToUniversalTime();
+            }
+        }
     }
 }
