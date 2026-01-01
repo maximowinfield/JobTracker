@@ -45,6 +45,8 @@ export default function AttachmentsCard(props: {
 }) {
   const { jobAppId, apiBaseUrl, token } = props;
 
+  const base = apiBaseUrl.replace(/\/+$/, "");
+
   const [attachments, setAttachments] = useState<AttachmentDto[]>([]);
   const [loadingList, setLoadingList] = useState(false);
 
@@ -56,14 +58,15 @@ export default function AttachmentsCard(props: {
 
   const canUpload = useMemo(() => !!file && !uploading, [file, uploading]);
 
-  async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
-    const res = await fetch(`${apiBaseUrl}${path}`, {
-      ...init,
-      headers: {
-        ...(init?.headers ?? {}),
-        Authorization: `Bearer ${token}`,
-      },
-    });
+async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(`${base}${path}`, {
+    ...init,
+    headers: {
+      ...(init?.headers ?? {}),
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
 
     if (!res.ok) {
       const text = await res.text().catch(() => "");
@@ -76,7 +79,7 @@ export default function AttachmentsCard(props: {
     setLoadingList(true);
     try {
       const data = await apiFetch<AttachmentDto[]>(
-        `/api/job-apps/${jobAppId}/attachments`
+        `/job-apps/${jobAppId}/attachments`
       );
       setAttachments(data);
     } finally {
@@ -108,7 +111,7 @@ export default function AttachmentsCard(props: {
     try {
       // 1) presign
       const presign = await apiFetch<PresignUploadResponse>(
-        `/api/job-apps/${jobAppId}/attachments/presign-upload`,
+        `/job-apps/${jobAppId}/attachments/presign-upload`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -164,7 +167,7 @@ export default function AttachmentsCard(props: {
   async function downloadAttachment(attachmentId: number) {
     try {
       const data = await apiFetch<PresignDownloadResponse>(
-        `/api/attachments/${attachmentId}/presign-download`
+        `/attachments/${attachmentId}/presign-download`
       );
       window.open(data.downloadUrl, "_blank", "noopener,noreferrer");
     } catch (e) {
@@ -176,7 +179,7 @@ export default function AttachmentsCard(props: {
   async function deleteAttachment(attachmentId: number) {
     if (!confirm("Delete this attachment?")) return;
     try {
-      await apiFetch<void>(`/api/attachments/${attachmentId}`, { method: "DELETE" });
+      await apiFetch<void>(`/attachments/${attachmentId}`, { method: "DELETE" });
       setStatus("Deleted ✅");
       await loadAttachments();
     } catch (e) {
