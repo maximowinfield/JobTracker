@@ -45,7 +45,9 @@ export default function AttachmentsCard(props: {
 }) {
   const { jobAppId, apiBaseUrl, token } = props;
 
-  const base = apiBaseUrl.replace(/\/+$/, "");
+  // Normalize base to avoid trailing slashes (prevents //)
+  // IMPORTANT: base should be "/api" in prod/local (or "https://.../api" if separate service)
+  const base = (apiBaseUrl || "/api").replace(/\/+$/, "");
 
   const [attachments, setAttachments] = useState<AttachmentDto[]>([]);
   const [loadingList, setLoadingList] = useState(false);
@@ -55,23 +57,27 @@ export default function AttachmentsCard(props: {
   const [status, setStatus] = useState<string>("");
 
   const maxBytes = 25 * 1024 * 1024;
-
   const canUpload = useMemo(() => !!file && !uploading, [file, uploading]);
 
-async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${base}${path}`, {
-    ...init,
-    headers: {
-      ...(init?.headers ?? {}),
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
+    const url = `${base}${path}`;
 
+    const res = await fetch(url, {
+      ...init,
+      headers: {
+        ...(init?.headers ?? {}),
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
     if (!res.ok) {
       const text = await res.text().catch(() => "");
       throw new Error(`API ${res.status}: ${text || res.statusText}`);
     }
+
+    // Some endpoints may return 204; handle safely
+    if (res.status === 204) return undefined as T;
+
     return (await res.json()) as T;
   }
 
@@ -95,7 +101,6 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   async function uploadSelectedFile() {
     if (!file) return;
 
-    // basic client validation
     if (file.size <= 0) {
       setStatus("That file looks empty.");
       return;
@@ -138,9 +143,9 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
         throw new Error(`S3 PUT ${putRes.status}: ${text || putRes.statusText}`);
       }
 
-      // 3) save metadata
+      // 3) save metadata (NOTE: NO "/api" here — base already contains it)
       setStatus("Saving attachment…");
-      await apiFetch<AttachmentDto>(`/api/job-apps/${jobAppId}/attachments`, {
+      await apiFetch<AttachmentDto>(`/job-apps/${jobAppId}/attachments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -159,8 +164,6 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
       setStatus(msg);
     } finally {
       setUploading(false);
-      // optional: clear status after a bit
-      // setTimeout(() => setStatus(""), 2500);
     }
   }
 
@@ -188,93 +191,91 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
     }
   }
 
-return (
-  <div className="rounded-xl border border-slate-200 bg-white p-3">
-    <div className="flex items-center justify-between">
-      <h3 className="m-0 text-sm font-semibold text-slate-900">Attachments</h3>
-      <span className="text-xs text-slate-500">Max: {formatBytes(maxBytes)}</span>
-    </div>
-
-    {/* Upload row */}
-    <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
-      <input
-        type="file"
-        onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-        disabled={uploading}
-        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none
-                   focus:border-slate-300 focus:ring-2 focus:ring-slate-200 disabled:cursor-not-allowed disabled:opacity-50
-                   file:mr-3 file:rounded-lg file:border file:border-slate-200 file:bg-white
-                   file:px-3 file:py-2 file:text-sm file:font-medium file:text-slate-900
-                   hover:file:bg-slate-50"
-      />
-
-      <button
-        onClick={() => void uploadSelectedFile()}
-        disabled={!canUpload}
-        className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white
-                   enabled:hover:bg-slate-800 active:bg-slate-950 disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {uploading ? "Uploading…" : "Upload"}
-      </button>
-    </div>
-
-    {/* Selected file */}
-    {file && (
-      <div className="mt-2 text-xs text-slate-500">
-        Selected: <span className="font-semibold text-slate-900">{file.name}</span>{" "}
-        ({formatBytes(file.size)})
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-3">
+      <div className="flex items-center justify-between">
+        <h3 className="m-0 text-sm font-semibold text-slate-900">Attachments</h3>
+        <span className="text-xs text-slate-500">Max: {formatBytes(maxBytes)}</span>
       </div>
-    )}
 
-    {/* Status */}
-    {status && (
-      <div className="mt-2 text-sm text-slate-700">
-        {status}
+      {/* Upload row */}
+      <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+        <input
+          type="file"
+          onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+          disabled={uploading}
+          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none
+                     focus:border-slate-300 focus:ring-2 focus:ring-slate-200 disabled:cursor-not-allowed disabled:opacity-50
+                     file:mr-3 file:rounded-lg file:border file:border-slate-200 file:bg-white
+                     file:px-3 file:py-2 file:text-sm file:font-medium file:text-slate-900
+                     hover:file:bg-slate-50"
+        />
+
+        <button
+          onClick={() => void uploadSelectedFile()}
+          disabled={!canUpload}
+          className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white
+                     enabled:hover:bg-slate-800 active:bg-slate-950 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {uploading ? "Uploading…" : "Upload"}
+        </button>
       </div>
-    )}
 
-    {/* List */}
-    <div className="mt-3">
-      {loadingList ? (
-        <div className="text-sm text-slate-500">Loading attachments…</div>
-      ) : attachments.length === 0 ? (
-        <div className="text-sm text-slate-500">No attachments yet.</div>
-      ) : (
-        <div className="grid gap-2">
-          {attachments.map((a) => (
-            <div
-              key={a.id}
-              className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3"
-            >
-              <div className="min-w-0">
-                <div className="truncate text-sm font-semibold text-slate-900">{a.fileName}</div>
-                <div className="text-xs text-slate-500">
-                  {formatBytes(a.sizeBytes)} • {formatDate(a.createdAtUtc)}
-                </div>
-              </div>
-
-              <div className="flex shrink-0 gap-2">
-                <button
-                  onClick={() => void downloadAttachment(a.id)}
-                  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium
-                             hover:bg-slate-50 active:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Download
-                </button>
-
-                <button
-                  onClick={() => void deleteAttachment(a.id)}
-                  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium
-                             hover:bg-slate-50 active:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          ))}
+      {/* Selected file */}
+      {file && (
+        <div className="mt-2 text-xs text-slate-500">
+          Selected: <span className="font-semibold text-slate-900">{file.name}</span>{" "}
+          ({formatBytes(file.size)})
         </div>
       )}
+
+      {/* Status */}
+      {status && <div className="mt-2 text-sm text-slate-700">{status}</div>}
+
+      {/* List */}
+      <div className="mt-3">
+        {loadingList ? (
+          <div className="text-sm text-slate-500">Loading attachments…</div>
+        ) : attachments.length === 0 ? (
+          <div className="text-sm text-slate-500">No attachments yet.</div>
+        ) : (
+          <div className="grid gap-2">
+            {attachments.map((a) => (
+              <div
+                key={a.id}
+                className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3"
+              >
+                <div className="min-w-0">
+                  <div className="truncate text-sm font-semibold text-slate-900">
+                    {a.fileName}
+                  </div>
+                  <div className="text-xs text-slate-500">
+                    {formatBytes(a.sizeBytes)} • {formatDate(a.createdAtUtc)}
+                  </div>
+                </div>
+
+                <div className="flex shrink-0 gap-2">
+                  <button
+                    onClick={() => void downloadAttachment(a.id)}
+                    className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium
+                               hover:bg-slate-50 active:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Download
+                  </button>
+
+                  <button
+                    onClick={() => void deleteAttachment(a.id)}
+                    className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium
+                               hover:bg-slate-50 active:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
-  </div>
-);
+  );
 }

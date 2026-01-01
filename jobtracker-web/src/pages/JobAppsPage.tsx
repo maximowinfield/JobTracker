@@ -179,7 +179,7 @@ const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
 
 export default function JobAppsPage() {
   const { logout, token } = useAuth();
-  const apiBaseUrl = import.meta.env.VITE_API_URL ?? "";
+  const apiBaseUrl = (import.meta.env.VITE_API_URL as string | undefined) ?? "/api";
 
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
