@@ -13,7 +13,7 @@ import {
   DragOverlay,
   KeyboardSensor,
   PointerSensor,
-  closestCorners,
+  pointerWithin,
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
@@ -713,7 +713,7 @@ async function moveToLane(jobId: number, nextLane: BoardLane) {
   <section className="mt-4 h-[calc(100vh-260px)]">
     <DndContext
       sensors={sensors}
-      collisionDetection={closestCorners}
+      collisionDetection={pointerWithin}
       onDragStart={(e) => setActiveId(String(e.active.id))}
       onDragCancel={() => setActiveId(null)}
 onDragEnd={(e) => {
@@ -788,7 +788,7 @@ return (
 
 
     <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
-      <div className="space-y-2 overflow-y-auto flex-1 min-h-[120px]">
+      <div className="space-y-2 overflow-y-auto flex-1 min-h-[220px]">
         {loading || isFetching ? (
           <div className="rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-600">
             Loading…
