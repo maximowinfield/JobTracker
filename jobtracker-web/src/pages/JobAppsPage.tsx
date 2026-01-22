@@ -447,17 +447,10 @@ async function moveToLane(jobId: number, nextLane: BoardLane) {
   // optimistic UI update
   setItems((prev) => prev.map((x) => (x.id === jobId ? { ...x, status: nextLane } : x)));
 
-  const payload = {
-    company: job.company ?? "",
-    roleTitle: job.roleTitle ?? "",
-    status: nextLane,
-    notes: job.notes ?? null,
-  };
-
-  console.log("MOVE PATCH payload ->", jobId, payload);
+  console.log("MOVE PATCH payload ->", jobId, { status: nextLane });
 
   try {
-    await updateJobApp(jobId, payload);
+    await updateJobApp(jobId, { status: nextLane });
     toast.success(`Moved to ${laneLabel(nextLane)}.`);
   } catch {
     requestAnimationFrame(() => {
@@ -466,6 +459,7 @@ async function moveToLane(jobId: number, nextLane: BoardLane) {
     toast.error("Move failed.");
   }
 }
+
 
 
 
