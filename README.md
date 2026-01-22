@@ -1,221 +1,233 @@
-Job Application Tracker
-=======================
+# JobTracker
 
-A **full-stack, API-first job application tracking system** designed to help users manage job applications across their lifecycle---from initial submission to final outcome.
+JobTracker is a full‑stack web application designed to help users track job applications across multiple stages of the job search process. It combines a Kanban-style board with a traditional table (archive) view, enabling both visual workflow management and detailed record keeping.
 
-This project focuses on **real-world backend engineering practices**, including secure authentication, clean API design, filtering and pagination, and preparation for cloud-based file storage.
+This project was built to demonstrate real‑world software engineering skills, including RESTful API design, authentication, optimistic UI updates, drag‑and‑drop state management, and production deployment.
 
-* * * * *
+---
 
-<img width="2558" height="1270" alt="image" src="https://github.com/user-attachments/assets/c41a4b4c-5173-413d-9bff-c22e6a1734c4" />
+## 🚀 Features
 
+* 🔐 **JWT-based Authentication**
 
+  * Secure login and protected API routes
+  * Automatic logout on unauthorized responses
 
-🎯 Project Purpose
-------------------
+* 📋 **Job Application Management (CRUD)**
 
-The Job Application Tracker was built to simulate a **production-style backend system** commonly used in SaaS and internal business tools. The goal is not just to store data, but to demonstrate:
+  * Create, edit, and delete job applications
+  * Track company, role, notes, and status
 
--   Secure user authentication and authorization
+* 🧩 **Kanban Board (Drag & Drop)**
 
--   Clean, maintainable API design
+  * Columns: Wishlist (Draft), Applied, Interviewing, Offer
+  * Drag cards between lanes to update application status
+  * Optimistic UI updates with rollback on failure
 
--   Practical data modeling and querying
+* 📊 **Archive View (Table)**
 
--   Readiness for frontend, mobile, or third-party clients
+  * Search, filter, and paginate applications
+  * View full history outside the Kanban workflow
 
-* * * * *
+* 📎 **Attachments Support**
 
-🧱 Tech Stack
--------------
+  * Upload and manage attachments per job application
+  * Backed by AWS S3 using presigned URLs
+
+* 🔎 **Search, Filtering & Pagination**
+
+  * Filter by status
+  * Search across company, role title, and notes
+  * Server‑side pagination
+
+---
+
+## 🧠 Technical Highlights
+
+### Frontend
+
+* React + TypeScript
+* Controlled forms and modal workflows
+* Drag-and-drop using `@dnd-kit`
+* Pointer-based collision detection for reliable Kanban interactions
+* Optimistic state updates for a responsive UI
+* URL-synchronized filters and pagination
 
 ### Backend
 
--   **C#**
+* .NET 8 Minimal APIs
+* RESTful endpoint design
+* Entity Framework Core
+* JWT authentication and authorization
+* Role- and user-scoped data access
 
--   **.NET 8 Minimal APIs**
+### Database
 
--   **Entity Framework Core**
+* SQLite for local development
+* PostgreSQL in production (Render)
+* EF Core migrations
 
--   **SQLite** (development & persistence)
+### Cloud & Deployment
 
-### Authentication & Security
+* Render for backend and frontend hosting
+* AWS S3 for file storage (attachments)
+* Environment-based configuration for local vs production
 
--   JWT-based authentication
+---
 
--   Secure password hashing
+## 🏗️ System Architecture (High Level)
 
--   User-scoped data access (no cross-user leakage)
+```
+React (TypeScript)
+   ↓ REST API (JSON + JWT)
+.NET 8 Minimal API
+   ↓ Entity Framework Core
+PostgreSQL / SQLite
+   ↓
+AWS S3 (Attachments)
+```
 
-### Cloud & Tooling
+---
 
--   Docker
+## 🐛 Real-World Debugging Example
 
--   Git & GitHub
+During development, a production-only drag-and-drop issue was discovered where cards could not be dropped into certain Kanban lanes despite working locally.
 
--   Render (deployment)
+**Root cause:** Geometry-based collision detection favored smaller nested elements instead of user intent.
 
--   Postman (API testing)
+**Fix:** Switched to pointer-based collision detection (`pointerWithin`), ensuring lanes correctly register drops based on cursor position.
 
--   Amazon S3 (planned for secure document uploads)
+This highlights the importance of testing UI behavior across environments and understanding third‑party library internals.
 
-* * * * *
+---
 
-🔑 Core Features
-----------------
-
-### ✅ Implemented
-
--   **User Registration & Login**
-
-    -   Secure password hashing
-
-    -   JWT issuance on authentication
-
--   **Job Application Management**
-
-    -   Create, read, update, and delete job applications
-
-    -   User-scoped access control
-
--   **Search & Filtering**
-
-    -   Keyword search (company, role)
-
-    -   Status-based filtering (Applied, Interviewing, Rejected, etc.)
-
-    -   Pagination for scalable result sets
-
--   **API-First Design**
-
-    -   Clean DTOs and predictable response shapes
-
-    -   Designed for frontend or mobile consumption
-
-* * * * *
-
-### 🚧 In Progress / Planned
-
--   Secure file uploads using **Amazon S3**
-
-    -   Resume, cover letter, and document attachments
-
-    -   Presigned URLs for safe client uploads
-
--   Attachment metadata linked to job applications
-
--   Optional frontend client
-
--   Expanded validation and error handling
-
-* * * * *
-
-📦 API Design Highlights
-------------------------
-
--   RESTful endpoint structure
-
--   Clear separation between:
-
-    -   Data models
-
-    -   DTOs
-
-    -   API contracts
-
--   Enum-based application statuses
-
--   Pagination and query parameters designed for real datasets
-
-Example endpoint pattern:
-
-`GET /api/job-apps?q=amazon&status=Applied&page=1&pageSize=25`
-
-* * * * *
-
-🧪 Development Practices
-------------------------
-
--   API testing via Postman
-
--   DTO mapping to prevent over-posting
-
--   Environment-based configuration
-
--   Docker-ready structure for deployment
-
--   Incremental feature development with clear commit history
-
-* * * * *
-
-🚀 Getting Started (Local Development)
---------------------------------------
+## 🧪 Local Development
 
 ### Prerequisites
 
--   .NET 8 SDK
+* Node.js (18+ recommended)
+* .NET 8 SDK
+* PostgreSQL (optional, SQLite works locally)
 
--   Git
+### Backend
 
-### Setup
-
-`git clone https://github.com/maximowinfield/JobTracker.git
-cd JobTracker
+```bash
 dotnet restore
-dotnet run`
-
-The API will be available at a local development URL similar to:
-
-`http://localhost:5137/api`
-
-(The exact port may vary depending on your environment.)
-
-* * * * *
-
-📁 Project Structure (High Level)
----------------------------------
-
-``` powershell JobTracker/
-├── Api/
-│   ├── Endpoints/
-│   ├── Models/
-│   ├── Dtos/
-│   └── Data/
-├── app.db
-├── Program.cs
-└── README.md
+dotnet ef database update
+dotnet run
 ```
 
-* * * * *
+### Frontend
 
-👤 About the Developer
-----------------------
+```bash
+npm install
+npm run dev
+```
 
-Built by **Maximo Winfield**, a **Computer Science senior** and **Amazon Learning Ambassador** pursuing a full-time role in software development.
+Set environment variables as needed:
 
--   🎓 B.S. in Computer Science --- Southern New Hampshire University
+* `VITE_API_URL`
+* `JWT__SECRET`
+* `AWS_REGION`
+* `S3_BUCKET_NAME`
 
--   💼 Amazon Operations / Learning Ambassador
+---
 
--   🌎 Based in New Jersey
+## 🎯 What This Project Demonstrates
 
--   GitHub: <https://github.com/maximowinfield>
+* Full-stack application design
+* RESTful API development
+* Secure authentication patterns
+* Production debugging and environment parity
+* UI state management and drag-and-drop systems
+* Cloud integration (AWS S3)
 
--   LinkedIn: <https://linkedin.com/in/mow851095611566412>
 
-* * * * *
+## 🔑 Key Files to Review
 
-📌 Why This Project Matters
----------------------------
+This project is structured to clearly separate concerns between authentication, data access, UI state, and cloud integrations. The files below highlight the most important engineering decisions and features.
 
-This repository demonstrates:
+### 🔐 Authentication & API Client
+- **`src/api/client.ts`**
+  - Centralized Axios client
+  - Automatically attaches JWT tokens to requests
+  - Handles unauthorized (`401`) responses consistently
+- **`src/context/useAuth.ts`**
+  - Authentication state management
+  - Login, logout, and token persistence
 
--   Backend design patterns used in production systems
+---
 
--   Secure authentication and authorization workflows
+### 📋 Job Applications (CRUD + REST Integration)
+- **`src/api/jobApps.ts`**
+  - Typed API layer for job applications
+  - RESTful `GET`, `POST`, `PATCH`, and `DELETE` requests
+- **`src/pages/JobAppsPage.tsx`**
+  - Core application logic
+  - Form handling, validation, and API integration
+  - State synchronization with URL parameters
 
--   Thoughtful API design with scalability in mind
+---
 
--   Practical preparation for cloud-integrated applications
+### 🧩 Kanban Board (Drag & Drop Workflow)
+- **`src/pages/JobAppsPage.tsx`**
+  - Drag-and-drop implementation using `@dnd-kit`
+  - `onDragEnd` logic for lane-based status transitions
+  - Optimistic UI updates with rollback on failure
+  - Production bug fix using pointer-based collision detection
 
-It is intentionally built as a **foundation**, not a toy project.
+**Key functions to review:**
+- `onDragEnd`
+- `moveToLane`
+- `LaneDroppable`
+- `SortableJobCard`
+
+---
+
+### 📊 Archive View (Search, Filter, Pagination)
+- **`src/pages/JobAppsPage.tsx`**
+  - Table-based archive view
+  - Server-side search and filtering
+  - Pagination state management (`page`, `pageSize`, `total`)
+
+---
+
+### 📎 Attachments & Cloud Storage
+- **`src/components/AttachmentsCard.tsx`**
+  - Attachment upload and management UI
+  - Uses presigned URLs for secure direct uploads
+- **`JobTracker.Api/Controllers/AttachmentsController.cs`**
+  - Generates short-lived AWS S3 presigned URLs
+  - Ensures files bypass the API server for scalability and security
+
+---
+
+### 🔎 Backend Core (API & Models)
+- **`JobTracker.Api/Controllers/JobAppsController.cs`**
+  - REST API endpoints for job applications
+  - Filtering, searching, and pagination logic
+- **`JobTracker.Api/Models/JobApplication.cs`**
+  - Domain model and status enum definitions
+
+---
+
+### ⭐ Recommended Entry Point
+If reviewing only one file, start with:
+- **`src/pages/JobAppsPage.tsx`**
+
+This file demonstrates frontend architecture, API integration, drag-and-drop workflows, error handling, and real-world debugging decisions.
+
+---
+
+## 📌 Future Enhancements
+
+* Reordering cards within lanes
+* Analytics (application velocity, funnel insights)
+* Company tagging and saved searches
+* Email reminders and follow-ups
+
+---
+
+## 📄 License
+
+This project is for educational and portfolio purposes.
