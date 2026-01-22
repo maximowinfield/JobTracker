@@ -143,110 +143,79 @@ Set environment variables as needed:
 * Cloud integration (AWS S3)
 
 
-
-
-🔑 Key Files to Review
+## 🔑 Key Files to Review
 
 This project is structured to clearly separate concerns between authentication, data access, UI state, and cloud integrations. The files below highlight the most important engineering decisions and features.
 
-🔐 Authentication & API Client
+### 🔐 Authentication & API Client
+- **`src/api/client.ts`**
+  - Centralized Axios client
+  - Automatically attaches JWT tokens to requests
+  - Handles unauthorized (`401`) responses consistently
+- **`src/context/useAuth.ts`**
+  - Authentication state management
+  - Login, logout, and token persistence
 
-src/api/client.ts
+---
 
-Centralized Axios client
+### 📋 Job Applications (CRUD + REST Integration)
+- **`src/api/jobApps.ts`**
+  - Typed API layer for job applications
+  - RESTful `GET`, `POST`, `PATCH`, and `DELETE` requests
+- **`src/pages/JobAppsPage.tsx`**
+  - Core application logic
+  - Form handling, validation, and API integration
+  - State synchronization with URL parameters
 
-Automatically attaches JWT tokens to requests
+---
 
-Handles unauthorized (401) responses consistently
+### 🧩 Kanban Board (Drag & Drop Workflow)
+- **`src/pages/JobAppsPage.tsx`**
+  - Drag-and-drop implementation using `@dnd-kit`
+  - `onDragEnd` logic for lane-based status transitions
+  - Optimistic UI updates with rollback on failure
+  - Production bug fix using pointer-based collision detection
 
-src/context/useAuth.ts
+**Key functions to review:**
+- `onDragEnd`
+- `moveToLane`
+- `LaneDroppable`
+- `SortableJobCard`
 
-Authentication state management
+---
 
-Login, logout, and token persistence
+### 📊 Archive View (Search, Filter, Pagination)
+- **`src/pages/JobAppsPage.tsx`**
+  - Table-based archive view
+  - Server-side search and filtering
+  - Pagination state management (`page`, `pageSize`, `total`)
 
-📋 Job Applications (CRUD + REST Integration)
+---
 
-src/api/jobApps.ts
+### 📎 Attachments & Cloud Storage
+- **`src/components/AttachmentsCard.tsx`**
+  - Attachment upload and management UI
+  - Uses presigned URLs for secure direct uploads
+- **`JobTracker.Api/Controllers/AttachmentsController.cs`**
+  - Generates short-lived AWS S3 presigned URLs
+  - Ensures files bypass the API server for scalability and security
 
-Typed API layer for job applications
+---
 
-RESTful GET, POST, PATCH, and DELETE requests
+### 🔎 Backend Core (API & Models)
+- **`JobTracker.Api/Controllers/JobAppsController.cs`**
+  - REST API endpoints for job applications
+  - Filtering, searching, and pagination logic
+- **`JobTracker.Api/Models/JobApplication.cs`**
+  - Domain model and status enum definitions
 
-src/pages/JobAppsPage.tsx
+---
 
-Core application logic
-
-Form handling, validation, and API integration
-
-State synchronization with URL parameters
-
-🧩 Kanban Board (Drag & Drop Workflow)
-
-src/pages/JobAppsPage.tsx
-
-Drag-and-drop implementation using @dnd-kit
-
-onDragEnd logic for lane-based status transitions
-
-Optimistic UI updates with rollback on failure
-
-Production bug fix using pointer-based collision detection
-
-Key functions to review:
-
-onDragEnd
-
-moveToLane
-
-LaneDroppable
-
-SortableJobCard
-
-📊 Archive View (Search, Filter, Pagination)
-
-src/pages/JobAppsPage.tsx
-
-Table-based archive view
-
-Server-side search and filtering
-
-Pagination state management (page, pageSize, total)
-
-📎 Attachments & Cloud Storage
-
-src/components/AttachmentsCard.tsx
-
-Attachment upload and management UI
-
-Uses presigned URLs for secure direct uploads
-
-JobTracker.Api/Controllers/AttachmentsController.cs
-
-Generates short-lived AWS S3 presigned URLs
-
-Ensures files bypass the API server for scalability and security
-
-🔎 Backend Core (API & Models)
-
-JobTracker.Api/Controllers/JobAppsController.cs
-
-REST API endpoints for job applications
-
-Filtering, searching, and pagination logic
-
-JobTracker.Api/Models/JobApplication.cs
-
-Domain model and status enum definitions
-
-⭐ Recommended Entry Point
-
+### ⭐ Recommended Entry Point
 If reviewing only one file, start with:
-
-src/pages/JobAppsPage.tsx
+- **`src/pages/JobAppsPage.tsx`**
 
 This file demonstrates frontend architecture, API integration, drag-and-drop workflows, error handling, and real-world debugging decisions.
-
 
 ---
 
