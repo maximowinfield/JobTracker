@@ -1,9 +1,9 @@
 import { api } from "./client";
 
 /**
- * IMPORTANT:
- * These must match your backend enum names EXACTLY (case-sensitive).
- * If you’re unsure, open: api/JobTracker.Api/Models/ApplicationStatus.cs
+ * ApplicationStatus
+ * - IMPORTANT: These must match backend enum names exactly.
+ * - Interview talking point: Shared enum values keep frontend columns and backend status consistent.
  */
 export type ApplicationStatus =
   | "Draft"
@@ -13,6 +13,11 @@ export type ApplicationStatus =
   | "Rejected"
   | "Accepted";
 
+/**
+ * JobAppDto
+ * - Purpose: Frontend shape of a Job Application record returned from the API.
+ * - Interview talking point: DTOs prevent exposing EF entities directly and keep contracts stable.
+ */
 export type JobAppDto = {
   id: number;
   company: string;
@@ -23,6 +28,10 @@ export type JobAppDto = {
   updatedAtUtc: string;
 };
 
+/**
+ * PagedResult<T>
+ * - Purpose: Standard paging contract so UI can handle large datasets efficiently.
+ */
 export type PagedResult<T> = {
   items: T[];
   total: number;
@@ -32,6 +41,11 @@ export type PagedResult<T> = {
 
 const JOB_APPS_PATH = "/job-apps";
 
+/**
+ * listJobApps
+ * - Purpose: Fetch job apps with optional filters + pagination.
+ * - Interview talking point: Keeps API calls out of UI components (separation of concerns).
+ */
 export async function listJobApps(params: {
   q?: string;
   status?: ApplicationStatus;
@@ -42,6 +56,10 @@ export async function listJobApps(params: {
   return res.data;
 }
 
+/**
+ * createJobApp
+ * - Purpose: Create a new job application record.
+ */
 export async function createJobApp(payload: {
   company: string;
   roleTitle: string;
@@ -52,6 +70,11 @@ export async function createJobApp(payload: {
   return res.data;
 }
 
+/**
+ * updateJobApp
+ * - Purpose: Partial updates (PATCH) so the UI can update only what changed.
+ * - Interview talking point: PATCH is ideal for status moves in a Kanban UI.
+ */
 export async function updateJobApp(
   id: number,
   payload: Partial<{
@@ -65,6 +88,10 @@ export async function updateJobApp(
   return res.data;
 }
 
+/**
+ * deleteJobApp
+ * - Purpose: Delete an application record.
+ */
 export async function deleteJobApp(id: number) {
   await api.delete(`${JOB_APPS_PATH}/${id}`);
 }
