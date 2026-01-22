@@ -445,20 +445,37 @@ async function moveToLane(jobId: number, nextLane: BoardLane) {
   if (!job) return;
 
   // optimistic UI update
-  setItems((prev) => prev.map((x) => (x.id === jobId ? { ...x, status: nextLane } : x)));
-
-  console.log("MOVE PATCH payload ->", jobId, { status: nextLane });
+  setItems((prev) =>
+    prev.map((x) => (x.id === jobId ? { ...x, status: nextLane } : x))
+  );
 
   try {
+    // ✅ send minimal PATCH payload
     await updateJobApp(jobId, { status: nextLane });
     toast.success(`Moved to ${laneLabel(nextLane)}.`);
-  } catch {
+  } catch (err: unknown) {
+    // 🔍 DEBUG LOGGING (THIS IS WHAT YOU ADD)
+    console.error("MOVE FAILED", err);
+
+    const maybeAxiosErr = err as {
+      response?: { status?: number; data?: unknown };
+      message?: string;
+    };
+
+    console.error("MOVE FAILED status:", maybeAxiosErr?.response?.status);
+    console.error("MOVE FAILED data:", maybeAxiosErr?.response?.data);
+
+    // rollback optimistic update
     requestAnimationFrame(() => {
-      setItems((prev) => prev.map((x) => (x.id === jobId ? job : x)));
+      setItems((prev) =>
+        prev.map((x) => (x.id === jobId ? job : x))
+      );
     });
+
     toast.error("Move failed.");
   }
 }
+
 
 
 
