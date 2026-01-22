@@ -7,13 +7,13 @@ This project was built to demonstrate real‑world software engineering skills, 
 Tech Stack:
 JobTracker is a full-stack application with a React frontend built using Vite and styled with Tailwind CSS, and a .NET 8 Minimal API backend using Entity Framework Core for data access. The backend exposes RESTful endpoints and handles authentication, business logic, and persistence, while Node.js is used only for frontend build tooling, not for the backend.
 
-# JobTracker – Tech Stack
+# JobTracker – Tech Stack 
 
 ## Frontend
- – Component-based user interface  
- – Development server and build tooling  
- – Styling and responsive layout  
- – Frontend logic  
+- **React** – Component-based user interface  
+- **Vite** – Development server and build tooling  
+- **Tailwind CSS** – Styling and responsive layout  
+- **JavaScript / TypeScript** – Frontend logic  
 
 ## Backend
 - **.NET 8 Minimal APIs** – Backend framework  
@@ -22,8 +22,8 @@ JobTracker is a full-stack application with a React frontend built using Vite an
 - **JWT Authentication** – Stateless authentication and authorization  
 
 ## Cloud & Deployment
--  (AWS) S3** – File attachments using presigned URLs  
--   Application deployment  
+- **Amazon Web Services (AWS) S3** – File attachments using presigned URLs  
+- **Render** – Application deployment  
 
 ## Development & Tooling
 - **Node.js** – Frontend tooling only (Vite builds)  
