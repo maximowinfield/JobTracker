@@ -126,12 +126,6 @@ C:\Users\Maximo\Documents\JobTracker\api\Jobtracker.Api\obj\Debug\net8.0\scopedc
 C:\Users\Maximo\Documents\JobTracker\api\Jobtracker.Api\obj\Debug\net8.0\staticwebassets.build.json
 C:\Users\Maximo\Documents\JobTracker\api\Jobtracker.Api\obj\Debug\net8.0\staticwebassets.development.json
 C:\Users\Maximo\Documents\JobTracker\api\Jobtracker.Api\obj\Debug\net8.0\staticwebassets.build.endpoints.json
-C:\Users\Maximo\Documents\JobTracker\api\Jobtracker.Api\obj\Debug\net8.0\staticwebassets\msbuild.JobTracker.Api.Microsoft.AspNetCore.StaticWebAssets.props
-C:\Users\Maximo\Documents\JobTracker\api\Jobtracker.Api\obj\Debug\net8.0\staticwebassets\msbuild.JobTracker.Api.Microsoft.AspNetCore.StaticWebAssetEndpoints.props
-C:\Users\Maximo\Documents\JobTracker\api\Jobtracker.Api\obj\Debug\net8.0\staticwebassets\msbuild.build.JobTracker.Api.props
-C:\Users\Maximo\Documents\JobTracker\api\Jobtracker.Api\obj\Debug\net8.0\staticwebassets\msbuild.buildMultiTargeting.JobTracker.Api.props
-C:\Users\Maximo\Documents\JobTracker\api\Jobtracker.Api\obj\Debug\net8.0\staticwebassets\msbuild.buildTransitive.JobTracker.Api.props
-C:\Users\Maximo\Documents\JobTracker\api\Jobtracker.Api\obj\Debug\net8.0\staticwebassets.pack.json
 C:\Users\Maximo\Documents\JobTracker\api\Jobtracker.Api\obj\Debug\net8.0\JobTrack.8324269B.Up2Date
 C:\Users\Maximo\Documents\JobTracker\api\Jobtracker.Api\obj\Debug\net8.0\JobTracker.Api.dll
 C:\Users\Maximo\Documents\JobTracker\api\Jobtracker.Api\obj\Debug\net8.0\refint\JobTracker.Api.dll
@@ -145,3 +139,8 @@ C:\Users\Maximo\Documents\JobTracker\api\JobTracker.Api\bin\Debug\net8.0\package
 C:\Users\Maximo\Documents\JobTracker\api\JobTracker.Api\bin\Debug\net8.0\package.json
 C:\Users\Maximo\Documents\JobTracker\api\JobTracker.Api\bin\Debug\net8.0\Npgsql.dll
 C:\Users\Maximo\Documents\JobTracker\api\JobTracker.Api\bin\Debug\net8.0\Npgsql.EntityFrameworkCore.PostgreSQL.dll
+C:\Users\Maximo\Documents\JobTracker\api\Jobtracker.api\obj\Debug\net8.0\rpswa.dswa.cache.json
+C:\Users\Maximo\Documents\JobTracker\api\Jobtracker.api\obj\Debug\net8.0\rjimswa.dswa.cache.json
+C:\Users\Maximo\Documents\JobTracker\api\Jobtracker.api\obj\Debug\net8.0\rjsmrazor.dswa.cache.json
+C:\Users\Maximo\Documents\JobTracker\api\Jobtracker.api\obj\Debug\net8.0\rjsmcshtml.dswa.cache.json
+C:\Users\Maximo\Documents\JobTracker\api\Jobtracker.api\obj\Debug\net8.0\staticwebassets.build.json.cache

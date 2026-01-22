@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Maximo\\Documents\\JobTracker\\api\\JobTracker.Api\\JobTracker.Api.csproj": {}
+    "C:\\Users\\Maximo\\Documents\\JobTracker\\api\\Jobtracker.api\\JobTracker.Api.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Maximo\\Documents\\JobTracker\\api\\JobTracker.Api\\JobTracker.Api.csproj": {
+    "C:\\Users\\Maximo\\Documents\\JobTracker\\api\\Jobtracker.api\\JobTracker.Api.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Maximo\\Documents\\JobTracker\\api\\JobTracker.Api\\JobTracker.Api.csproj",
+        "projectUniqueName": "C:\\Users\\Maximo\\Documents\\JobTracker\\api\\Jobtracker.api\\JobTracker.Api.csproj",
         "projectName": "JobTracker.Api",
-        "projectPath": "C:\\Users\\Maximo\\Documents\\JobTracker\\api\\JobTracker.Api\\JobTracker.Api.csproj",
+        "projectPath": "C:\\Users\\Maximo\\Documents\\JobTracker\\api\\Jobtracker.api\\JobTracker.Api.csproj",
         "packagesPath": "C:\\Users\\Maximo\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Maximo\\Documents\\JobTracker\\api\\JobTracker.Api\\obj\\",
+        "outputPath": "C:\\Users\\Maximo\\Documents\\JobTracker\\api\\Jobtracker.api\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
