@@ -440,33 +440,33 @@ useEffect(() => {
     setConfirmDelete(null);
   }
 
-  async function moveToLane(jobId: number, nextLane: BoardLane) {
+async function moveToLane(jobId: number, nextLane: BoardLane) {
   const job = items.find((x) => x.id === jobId);
   if (!job) return;
 
   // optimistic UI update
   setItems((prev) => prev.map((x) => (x.id === jobId ? { ...x, status: nextLane } : x)));
 
+  const payload = {
+    company: job.company ?? "",
+    roleTitle: job.roleTitle ?? "",
+    status: nextLane,
+    notes: job.notes ?? null,
+  };
+
+  console.log("MOVE PATCH payload ->", jobId, payload);
+
   try {
-    await updateJobApp(jobId, {
-      company: job.company ?? "",
-      roleTitle: job.roleTitle ?? "",
-      status: nextLane,
-      notes: job.notes ?? null,
-    });
+    await updateJobApp(jobId, payload);
     toast.success(`Moved to ${laneLabel(nextLane)}.`);
-} catch {
-  // allow dnd-kit to animate snap-back
-  requestAnimationFrame(() => {
-    setItems((prev) =>
-      prev.map((x) => (x.id === jobId ? job : x))
-    );
-  });
-
-  toast.error("Move failed.");
+  } catch {
+    requestAnimationFrame(() => {
+      setItems((prev) => prev.map((x) => (x.id === jobId ? job : x)));
+    });
+    toast.error("Move failed.");
+  }
 }
 
-}
 
 
   async function onSave() {
