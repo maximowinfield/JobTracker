@@ -10,10 +10,10 @@ JobTracker is a full-stack application with a React frontend built using Vite an
 # JobTracker – Tech Stack
 
 ## Frontend
-- **:contentReference[oaicite:0]{index=0}** – Component-based user interface  
-- **:contentReference[oaicite:1]{index=1}** – Development server and build tooling  
-- **:contentReference[oaicite:2]{index=2}** – Styling and responsive layout  
-- **JavaScript / TypeScript** – Frontend logic  
+ – Component-based user interface  
+ – Development server and build tooling  
+ – Styling and responsive layout  
+ – Frontend logic  
 
 ## Backend
 - **.NET 8 Minimal APIs** – Backend framework  
@@ -22,8 +22,8 @@ JobTracker is a full-stack application with a React frontend built using Vite an
 - **JWT Authentication** – Stateless authentication and authorization  
 
 ## Cloud & Deployment
-- **:contentReference[oaicite:3]{index=3} (AWS) S3** – File attachments using presigned URLs  
-- **:contentReference[oaicite:4]{index=4}** – Application deployment  
+-  (AWS) S3** – File attachments using presigned URLs  
+-   Application deployment  
 
 ## Development & Tooling
 - **Node.js** – Frontend tooling only (Vite builds)  
