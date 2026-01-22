@@ -4,6 +4,9 @@ JobTracker is a full‑stack web application designed to help users track job ap
 
 This project was built to demonstrate real‑world software engineering skills, including RESTful API design, authentication, optimistic UI updates, drag‑and‑drop state management, and production deployment.
 
+Tech Stack:
+JobTracker is a full-stack application with a React frontend built using Vite and styled with Tailwind CSS, and a .NET 8 Minimal API backend using Entity Framework Core for data access. The backend exposes RESTful endpoints and handles authentication, business logic, and persistence, while Node.js is used only for frontend build tooling, not for the backend.
+
 ---
 
 ## 🚀 Features
