@@ -727,23 +727,33 @@ onDragEnd={(e) => {
 
   const jobId = parseCardId(active);
 
-  // if dropped on a lane container
+  // ✅ FIRST: if dropped on a lane
   if (over.startsWith("lane:")) {
     const nextLane = over.replace("lane:", "") as BoardLane;
     void moveToLane(jobId, nextLane);
     return;
   }
 
-  // if dropped on another card, move into that card's lane
+  // ✅ SECOND: only fallback to card-based lane resolution
   if (isCardId(over)) {
     const overJobId = parseCardId(over);
     const overJob = items.find((x) => x.id === overJobId);
     if (!overJob) return;
 
-    const nextLane = overJob.status as BoardLane;
-    void moveToLane(jobId, nextLane);
+    // guard against non-board statuses
+    if (
+      overJob.status !== "Draft" &&
+      overJob.status !== "Applied" &&
+      overJob.status !== "Interviewing" &&
+      overJob.status !== "Offer"
+    ) {
+      return;
+    }
+
+    void moveToLane(jobId, overJob.status);
   }
 }}
+
 
     >
       <div className="grid gap-4 rounded-xl border border-slate-200 bg-white p-3 grid-cols-1 md:grid-cols-2 xl:grid-cols-4">
