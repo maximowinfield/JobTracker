@@ -6,19 +6,20 @@ Slice 1: Authentication
 
 Tell the story:
 
-Backend issues JWT
+**Backend issues JWT**
 
-Frontend stores token and uses it for protected calls
+**Frontend stores token and uses it for protected calls**
 
-Files to point at
+**Files to point at**
 
-AuthEndpoints.cs → register/login, password hashing, token issuance
+**AuthEndpoints.cs → register/login, password hashing, token issuance**
 
-Program.cs → JWT validation + auth middleware
+**Program.cs → JWT validation + auth middleware**
 
-client.ts → attaches Authorization: Bearer <token>
+**client.ts → attaches Authorization: Bearer <token>**
 
-AuthProvider.tsx + useAuth.ts → stores/exposes auth state
+**AuthProvider.tsx + useAuth.ts → stores/exposes auth state**
+
 
 One-liner
 
