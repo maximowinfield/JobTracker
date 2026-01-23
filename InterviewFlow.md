@@ -23,25 +23,26 @@ Tell the story:
 
 One-liner
 
-Auth is stateless via JWT; every request carries the token, and the server validates it through the middleware pipeline.
+** Auth is stateless via JWT; every request carries the token, and the server validates it through the middleware pipeline. **
 
 Slice 2: Job Applications 
 
 Tell the story:
 
-REST endpoints for job applications
+**REST endpoints for job applications**
 
-UI loads and renders data from API
+**UI loads and renders data from API**
 
-Files to point at
+**Files to point at**
 
-JobAppEndpoints.cs → REST endpoints (GET/POST/PUT/PATCH/DELETE)
+**JobAppEndpoints.cs → REST endpoints (GET/POST/PUT/PATCH/DELETE)**
 
-JobApplication.cs + ApplicationStatus.cs → domain model
+**JobApplication.cs + ApplicationStatus.cs → domain model**
 
-jobapps.ts → service layer functions like listJobApps
+**jobapps.ts → service layer functions like listJobApps**
 
-JobAppsPage.tsx → useEffect triggers load + renders list
+**JobAppsPage.tsx → useEffect triggers load + renders list**
+
 
 One-liner
 
