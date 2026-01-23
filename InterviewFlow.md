@@ -73,7 +73,7 @@ One-liner
 
 ### 1. Authentication
 - Validates the JWT ``` // Authentication (JWT Bearer)```
-- Builds the user identity (`ClaimsPrincipal`) // ``` - Authenticate first (build user principal from token) builds the ClaimsPrincipal ``` 
+- Builds the user identity (`ClaimsPrincipal`) ```// - Authenticate first (build user principal from token) builds the ClaimsPrincipal ``` 
 
 
 
