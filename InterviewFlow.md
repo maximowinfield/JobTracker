@@ -58,9 +58,9 @@ One-liner
 
 - Registers application services once so they can be injected where needed
 - Includes:
-  - `AppDbContext` (Entity Framework Core) // Database (Entity Framework Core)
-  - `JwtOptions` and `JwtTokenService` // JWT Options
-  - `IAmazonS3` (AWS SDK client) // AWS S3 Client (Dependency Injection)
+  - `AppDbContext` (Entity Framework Core) ``` // Database (Entity Framework Core) ```
+  - `JwtOptions` and `JwtTokenService` ``` // JWT Options ```
+  - `IAmazonS3` (AWS SDK client) ``` // AWS S3 Client (Dependency Injection)``` 
 - Benefits:
   - Loose coupling
   - Improved testability
@@ -78,6 +78,7 @@ One-liner
 
 
 ### 2. Authorization
+``` // - Enables endpoint protection via [RequireAuthorization()] for Minimal APIs. ```
 - Enforces access rules on protected endpoints
 - Roles/Policies can be added later
 
@@ -101,15 +102,38 @@ One-liner
 *CORS is configured so the React frontend can communicate with the API during development. In production, this would be restricted to known frontend domains.*
 
 ### Database Provider Configuration & Migrations
+``` // Database (Entity Framework Core) ```
 - Configures Entity Framework Core
 - Dynamically selects the database provider:
   - PostgreSQL for production (Render)
   - SQLite for local development
 - Automatically applies migrations on startup
+``` // - Automatically applies EF Core migrations at runtime. ```
 
 **Interview phrasing:**  
 *Program.cs configures Entity Framework Core and selects the database provider based on the connection string, then applies migrations on startup to keep the schema in sync.*
 
+### Endpoint Module Mapping (Routes)
+
+- Keeps `Program.cs` readable by moving feature endpoints into dedicated modules/files
+- Program.cs stays focused on composition (middleware + DI + routing), while endpoint definitions live elsewhere
+- This supports the vertical slices:
+  - Auth slice routes are mapped via `app.MapAuth()`
+  - Job Apps slice routes are mapped via `app.MapJobApps()`
+
+```csharp
+// Endpoint modules
+// - Keeps Program.cs readable by mapping feature endpoints by responsibility.
+// - Auth: login/register/token issuance
+// - JobApps: CRUD for job application resources
+// - Attachments: S3 presigned uploads + metadata
+app.MapAuth();
+app.MapJobApps();
+```
+
+### Explaining Attachments 
+
+Attachments are handled as a separate endpoint module that uses AWS S3 presigned URLs, so files never pass through the API server directly.
 
 “If I go blank” fallback
 
