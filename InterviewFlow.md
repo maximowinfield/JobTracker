@@ -51,9 +51,7 @@ One-liner
 "Job apps follow RESTful design, and the frontend talks through a service layer so the UI stays clean and testable."
 ```
 
-Program.cs middleware
-
-Explain what it does, not every line:
+Program.cs middleware handles
 
 Dependency injection registrations
 
