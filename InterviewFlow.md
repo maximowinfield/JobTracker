@@ -22,8 +22,9 @@ Tell the story:
 
 
 One-liner
-
-** Auth is stateless via JWT; every request carries the token, and the server validates it through the middleware pipeline. **
+```
+"Auth is stateless via JWT; every request carries the token, and the server validates it through the middleware pipeline."
+```
 
 Slice 2: Job Applications 
 
@@ -46,7 +47,9 @@ Tell the story:
 
 One-liner
 
-Job apps follow RESTful design, and the frontend talks through a service layer so the UI stays clean and testable.
+```
+"Job apps follow RESTful design, and the frontend talks through a service layer so the UI stays clean and testable."
+```
 
 Program.cs middleware
 
@@ -64,12 +67,16 @@ Maps endpoint modules
 
 A clean phrase
 
-Program.cs is the composition root: it configures cross-cutting concerns like CORS, authentication, authorization, EF Core, and then maps my endpoint modules.
+```
+"Program.cs is the composition root: it configures cross-cutting concerns like CORS, authentication, authorization, EF Core, and then maps my endpoint modules."
+```
 
-The page load flow (20–30 seconds)
+The page load flow
 
-When JobAppsPage loads, it initializes state from the URL, then a useEffect triggers load(). load() calls listJobApps in jobapps.ts, which uses client.ts to send the request with the JWT. Program.cs validates the token, routes to JobAppEndpoints, EF Core returns data, and the UI renders the list.
+```
+"When JobAppsPage loads, it initializes state from the URL, then a useEffect triggers load(). load() calls listJobApps in jobapps.ts, which uses client.ts to send the request with the JWT. Program.cs validates the token, routes to JobAppEndpoints, EF Core returns data, and the UI renders the list."
+```
 
-“If I go blank” fallback (10 seconds)
+“If I go blank” fallback
 
 Two slices: Auth and Job Apps. Program.cs wires middleware and routing. Frontend calls the API through jobapps.ts and client.ts, and JWT secures protected endpoints.
