@@ -75,29 +75,36 @@ One-liner
 
 ### Authorization
 - Enforces access rules on protected endpoints
+- Roles/Policies can be added later
 
 **Interview phrasing:**  
 *The middleware pipeline validates JWTs first using authentication middleware, then enforces access rules with authorization middleware.*
 
 
 
-CORS
+### CORS (Cross-Origin Resource Sharing)
+- Allows the React frontend (different origin) to call the API
+- Configured as development-friendly:
+  - Allows all headers
+  - Allows all HTTP methods
+  - Accepts requests from any origin
+- Required due to browser security restrictions
 
-Database provider configuration + migrations
+**Interview phrasing:**  
+*CORS is configured so the React frontend can communicate with the API during development. In production, this would be restricted to known frontend domains.*
 
-Maps endpoint modules
+---
 
-A clean phrase
+### Database Provider Configuration & Migrations
+- Configures Entity Framework Core
+- Dynamically selects the database provider:
+  - PostgreSQL for production (Render)
+  - SQLite for local development
+- Automatically applies migrations on startup
 
-```
-"Program.cs is the composition root: it configures cross-cutting concerns like CORS, authentication, authorization, EF Core, and then maps my endpoint modules."
-```
+**Interview phrasing:**  
+*Program.cs configures Entity Framework Core and selects the database provider based on the connection string, then applies migrations on startup to keep the schema in sync.*
 
-The page load flow
-
-```
-"When JobAppsPage loads, it initializes state from the URL, then a useEffect triggers load(). load() calls listJobApps in jobapps.ts, which uses client.ts to send the request with the JWT. Program.cs validates the token, routes to JobAppEndpoints, EF Core returns data, and the UI renders the list."
-```
 
 “If I go blank” fallback
 
