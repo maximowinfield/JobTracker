@@ -32,7 +32,15 @@ JobTracker is a full-stack application with a React frontend built using Vite an
 
 ## Architecture & Practices
 - Client–Server Architecture  
-- RESTful Design Principles  
+- **RESTful Design Principles**
+  - Client–Server Separation
+  - Statelessness
+  - Resource-Based Design
+  - Standard HTTP Methods
+  - Meaningful HTTP Status Codes
+  - Uniform Interface
+  - Layered System
+  - Cacheability 
 - Layered Backend Structure  
 - Secure File Uploads  
 
