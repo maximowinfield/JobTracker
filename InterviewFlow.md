@@ -93,8 +93,6 @@ One-liner
 **Interview phrasing:**  
 *CORS is configured so the React frontend can communicate with the API during development. In production, this would be restricted to known frontend domains.*
 
----
-
 ### Database Provider Configuration & Migrations
 - Configures Entity Framework Core
 - Dynamically selects the database provider:
