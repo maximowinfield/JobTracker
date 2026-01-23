@@ -1,0 +1,30 @@
+Authentication slice | Vertical Architecture
+
+AuthEndpoints.cs → JWT → client.ts adds token → AuthProvider stores state → useAuth exposes it
+
+Job Apps slice
+
+JobAppEndpoints.cs → JobApplication model/status enum → jobapps.ts calls API → JobAppsPage.tsx renders
+
+The Walkthrough
+
+Authentication slice
+AuthEndpoints.cs → JWT issued
+client.ts adds token
+AuthProvider.tsx stores auth state
+useAuth.ts exposes auth to components
+
+Job Apps slice
+JobAppEndpoints.cs → CRUD endpoints
+JobApplication.cs + ApplicationStatus.cs → domain model
+jobapps.ts calls API
+JobAppsPage.tsx renders UI
+
+Program.cs (The glue, middleware)
+ ├─ configures JWT authentication & authorization
+ ├─ registers DbContext (EF Core)
+ ├─ wires AWS S3 client
+ ├─ sets up CORS, middleware, static hosting
+ ├─ maps Auth / JobApps / Attachments endpoints
+
+"I structured the project around vertical slices for authentication and job applications. Program.cs isn’t a slice itself — it acts as the composition root. It configures cross-cutting concerns like authentication, database access, CORS, and dependency injection, and then wires the feature slices together."

@@ -1,0 +1,14 @@
+def solution(input):
+    # edge cases
+    if not input:
+        return None
+
+    # setup data structure
+    result = ...
+    
+    # main loop
+    for item in input:
+        # logic here
+        pass
+
+    return result

@@ -1,0 +1,40 @@
+Job Apps Page Load Flow (with Files)
+
+User navigates to Job Apps page
+→ JobAppsPage.tsx
+
+React runs an effect on mount to load data
+→ JobAppsPage.tsx (useEffect)
+
+Page calls the Job Apps service layer
+→ jobapps.ts
+
+Service calls the shared API client
+→ client.ts
+
+API client attaches Authorization header (JWT)
+→ client.ts
+
+Request enters backend middleware pipeline
+→ Program.cs
+
+JWT is validated
+→ Program.cs (UseAuthentication())
+
+Authorization rules are enforced
+→ Program.cs (UseAuthorization())
+
+Request is routed to the Job Apps endpoints
+→ JobAppEndpoints.cs
+
+Endpoint reads/writes data using EF Core
+→ AppDbContext (via JobApplication.cs, ApplicationStatus.cs)
+
+API returns JSON response
+→ JobAppEndpoints.cs
+
+Frontend receives data and updates state
+→ JobAppsPage.tsx
+
+UI renders the job application list
+→ JobAppsPage.tsx
