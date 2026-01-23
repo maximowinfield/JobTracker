@@ -55,11 +55,12 @@ One-liner
 ---
 
 ### Dependency Injection Registrations
+
 - Registers application services once so they can be injected where needed
 - Includes:
-  - `AppDbContext` (Entity Framework Core)
-  - `JwtOptions` and `JwtTokenService`
-  - `IAmazonS3` (AWS SDK client)
+  - `AppDbContext` (Entity Framework Core) // Database (Entity Framework Core)
+  - `JwtOptions` and `JwtTokenService` // JWT Options
+  - `IAmazonS3` (AWS SDK client) // AWS S3 Client (Dependency Injection)
 - Benefits:
   - Loose coupling
   - Improved testability
