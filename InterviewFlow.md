@@ -68,7 +68,7 @@ One-liner
 **Interview phrasing:**  
 *Program.cs configures dependency injection so services like the database context, JWT token service, and AWS S3 client can be injected where needed instead of being manually constructed.*
 
-###Auth pipeline order
+### Auth pipeline order
 ### Authentication
 - Validates the JWT
 - Builds the user identity (`ClaimsPrincipal`)
