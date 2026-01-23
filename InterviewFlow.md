@@ -51,11 +51,35 @@ One-liner
 "Job apps follow RESTful design, and the frontend talks through a service layer so the UI stays clean and testable."
 ```
 
-Program.cs middleware handles
+## Program.cs Middleware Responsibilities
+---
 
-Dependency injection registrations
+### Dependency Injection Registrations
+- Registers application services once so they can be injected where needed
+- Includes:
+  - `AppDbContext` (Entity Framework Core)
+  - `JwtOptions` and `JwtTokenService`
+  - `IAmazonS3` (AWS SDK client)
+- Benefits:
+  - Loose coupling
+  - Improved testability
+  - Centralized configuration
 
-Auth pipeline order
+**Interview phrasing:**  
+*Program.cs configures dependency injection so services like the database context, JWT token service, and AWS S3 client can be injected where needed instead of being manually constructed.*
+
+###Auth pipeline order
+### Authentication
+- Validates the JWT
+- Builds the user identity (`ClaimsPrincipal`)
+
+### Authorization
+- Enforces access rules on protected endpoints
+
+**Interview phrasing:**  
+*The middleware pipeline validates JWTs first using authentication middleware, then enforces access rules with authorization middleware.*
+
+
 
 CORS
 
