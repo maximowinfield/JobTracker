@@ -1,4 +1,4 @@
-30-second overview (opening)
+Overview (opening)
 
 JobTracker is a full-stack app with a React frontend and a .NET 8 Minimal API backend. I structured it around two vertical slices: Authentication and Job Applications. Program.cs is the composition root that wires middleware, dependency injection, and routes, so both slices work end-to-end.
 
