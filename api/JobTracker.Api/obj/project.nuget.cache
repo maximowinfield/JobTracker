@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "naDo6ds95pc=",
+  "dgSpecHash": "3eHo2XpsL70=",
   "success": true,
-  "projectFilePath": "C:\\Users\\Maximo\\Documents\\JobTracker\\api\\Jobtracker.api\\JobTracker.Api.csproj",
+  "projectFilePath": "C:\\Users\\Maximo\\Documents\\JobTracker\\api\\JobTracker.Api\\JobTracker.Api.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Maximo\\.nuget\\packages\\awssdk.core\\4.0.3.6\\awssdk.core.4.0.3.6.nupkg.sha512",
     "C:\\Users\\Maximo\\.nuget\\packages\\awssdk.s3\\4.0.16.1\\awssdk.s3.4.0.16.1.nupkg.sha512",

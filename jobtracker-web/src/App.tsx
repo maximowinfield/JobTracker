@@ -41,7 +41,7 @@ export default function App() {
       {/* AuthProvider wraps routing so all routes/pages can access auth state */}
       <AuthProvider>
         <BrowserRouter>
-          {/* App layout wrapper */}
+          {/* App layout wrapper via Tailwind CSS */}
           <div className="min-h-screen w-full bg-neutral-900">
             {/* Constrain + center the routed content */}
             <div className="mx-auto w-full max-w-7xl">
