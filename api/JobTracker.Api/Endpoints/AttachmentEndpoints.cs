@@ -1,6 +1,15 @@
 // ================================
 // ATTACHMENT_ENDPOINTS_S3_PRESIGNED_DROPIN
 // ================================
+// Purpose:
+// - Handles file attachments (resumes / cover letters) for job applications
+// - Uses S3 presigned URLs so files upload/download directly with S3
+// - API stores metadata + enforces authorization, not file bytes
+// ================================
+// Attachments are implemented as a separate vertical slice. The API generates presigned S3 URLs for uploads and downloads,
+// enforces ownership using JWT claims, and stores metadata in the database. Files never pass through the API server, which 
+// keeps uploads scalable and secure
+
 using System.Security.Claims;
 using Amazon.S3;
 using Amazon.S3.Model;
@@ -13,7 +22,12 @@ namespace JobTracker.Api.Endpoints;
 
 public static class AttachmentEndpoints
 {
-    // 🔎 SEARCH TERM: ATTACHMENTS_TO_DTO
+    // --------------------------------
+    // DTO Mapping
+    // --------------------------------
+    // Converts Attachment entity → AttachmentDto
+    // Keeps API responses stable and avoids leaking EF entities
+    // SEARCH TERM: ATTACHMENTS_TO_DTO
     private static AttachmentDto ToDto(Attachment a) =>
         new(
             a.Id,
@@ -25,27 +39,32 @@ public static class AttachmentEndpoints
             a.CreatedAtUtc
         );
 
-    // 🔎 SEARCH TERM: ATTACHMENTS_PRESIGN_UPLOAD_REQUEST
+    // --------------------------------
+    // Request / Response Contracts
+    // --------------------------------
+    // Explicit request/response types keep endpoints self-documenting
+
+    // SEARCH TERM: ATTACHMENTS_PRESIGN_UPLOAD_REQUEST
     public record PresignUploadRequest(
         string FileName,
         string ContentType,
         long SizeBytes
     );
 
-    // 🔎 SEARCH TERM: ATTACHMENTS_PRESIGN_UPLOAD_RESPONSE
+    // SEARCH TERM: ATTACHMENTS_PRESIGN_UPLOAD_RESPONSE
     public record PresignUploadResponse(
         string UploadUrl,
         string StorageKey,
         int ExpiresInSeconds
     );
 
-    // 🔎 SEARCH TERM: ATTACHMENTS_PRESIGN_DOWNLOAD_RESPONSE
+    // SEARCH TERM: ATTACHMENTS_PRESIGN_DOWNLOAD_RESPONSE
     public record PresignDownloadResponse(
         string DownloadUrl,
         int ExpiresInSeconds
     );
 
-    // 🔎 SEARCH TERM: ATTACHMENTS_CREATE_ATTACHMENT_REQUEST
+    // SEARCH TERM: ATTACHMENTS_CREATE_ATTACHMENT_REQUEST
     public record CreateAttachmentRequest(
         string FileName,
         string ContentType,
@@ -55,15 +74,24 @@ public static class AttachmentEndpoints
 
     public static void MapAttachments(this WebApplication app)
     {
-        // 🔎 SEARCH TERM: ATTACHMENTS_GROUP_SETUP
+        // --------------------------------
+        // Route Group Setup
+        // --------------------------------
+        // All attachment endpoints:
+        // - Live under /api
+        // - Require authentication by default
+        // SEARCH TERM: ATTACHMENTS_GROUP_SETUP
         var group = app.MapGroup("/api")
             .RequireAuthorization();
 
         // ================================
-        // 🔎 SEARCH TERM: ATTACHMENTS_PRESIGN_UPLOAD_ENDPOINT
-        // POST /api/job-apps/{jobAppId}/attachments/presign-upload
-        // Returns a presigned PUT URL so the frontend can upload directly to S3.
+        // PRESIGN UPLOAD
         // ================================
+        // POST /api/job-apps/{jobAppId}/attachments/presign-upload
+        // - Validates ownership + file constraints
+        // - Generates a presigned PUT URL
+        // - Frontend uploads directly to S3 (API not in data path)
+        // SEARCH TERM: ATTACHMENTS_PRESIGN_UPLOAD_ENDPOINT
         group.MapPost("/job-apps/{jobAppId:int}/attachments/presign-upload", async (
             int jobAppId,
             PresignUploadRequest req,
@@ -71,9 +99,10 @@ public static class AttachmentEndpoints
             ClaimsPrincipal user,
             IAmazonS3 s3) =>
         {
-            const long MaxFileSizeBytes = 25L * 1024L * 1024L; // 25 MB
-            const int ExpSeconds = 10 * 60; // 10 minutes
+            const long MaxFileSizeBytes = 25L * 1024L * 1024L; // 25 MB limit
+            const int ExpSeconds = 10 * 60; // URL valid for 10 minutes
 
+            // Basic request validation
             if (string.IsNullOrWhiteSpace(req.FileName))
                 return Results.BadRequest(new { error = "FileName is required." });
 
@@ -83,24 +112,28 @@ public static class AttachmentEndpoints
             if (req.SizeBytes > MaxFileSizeBytes)
                 return Results.BadRequest(new { error = "File too large (max 25 MB)." });
 
+            // Extract user identity from JWT
             var userId = int.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-            // ✅ ensure the job app belongs to this user
+            // Authorization guard: ensure job app belongs to this user
             var ownsApp = await db.JobApplications
                 .AnyAsync(x => x.Id == jobAppId && x.UserId == userId);
 
             if (!ownsApp) return Results.NotFound();
 
+            // Resolve S3 bucket from environment
             var bucket = Environment.GetEnvironmentVariable("S3_BUCKET_NAME");
             if (string.IsNullOrWhiteSpace(bucket))
                 return Results.Problem("S3_BUCKET_NAME is not set.");
 
-            // 🔎 SEARCH TERM: ATTACHMENTS_S3_KEY_FORMAT
+            // Build a safe, scoped storage key
+            // SEARCH TERM: ATTACHMENTS_S3_KEY_FORMAT
             var safeFileName = Path.GetFileName(req.FileName.Trim());
             var guid = Guid.NewGuid().ToString("N");
 
-            // Keep keys user-scoped + app-scoped for easier authorization checks
-            var storageKey = $"users/{userId}/job-apps/{jobAppId}/attachments/{guid}/{safeFileName}";
+            // User-scoped + job-scoped path simplifies authorization and cleanup
+            var storageKey =
+                $"users/{userId}/job-apps/{jobAppId}/attachments/{guid}/{safeFileName}";
 
             // Generate presigned PUT URL
             var presign = new GetPreSignedUrlRequest
@@ -122,9 +155,11 @@ public static class AttachmentEndpoints
         });
 
         // ================================
-        // 🔎 SEARCH TERM: ATTACHMENTS_LIST_FOR_JOBAPP
-        // GET /api/job-apps/{jobAppId}/attachments
+        // LIST ATTACHMENTS FOR JOB APP
         // ================================
+        // GET /api/job-apps/{jobAppId}/attachments
+        // - Returns metadata only (no file data)
+        // SEARCH TERM: ATTACHMENTS_LIST_FOR_JOBAPP
         group.MapGet("/job-apps/{jobAppId:int}/attachments", async (
             int jobAppId,
             AppDbContext db,
@@ -132,6 +167,7 @@ public static class AttachmentEndpoints
         {
             var userId = int.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
+            // Ownership check
             var ownsApp = await db.JobApplications
                 .AnyAsync(x => x.Id == jobAppId && x.UserId == userId);
 
@@ -144,15 +180,16 @@ public static class AttachmentEndpoints
                 .Select(a => ToDto(a))
                 .ToListAsync();
 
-
             return Results.Ok(attachments);
         });
 
         // ================================
-        // 🔎 SEARCH TERM: ATTACHMENTS_CREATE_METADATA_ONLY
-        // POST /api/job-apps/{jobAppId}/attachments (metadata only)
-        // Expects StorageKey from the presign endpoint.
+        // CREATE ATTACHMENT METADATA
         // ================================
+        // POST /api/job-apps/{jobAppId}/attachments
+        // - Called AFTER successful S3 upload
+        // - Persists metadata only
+        // SEARCH TERM: ATTACHMENTS_CREATE_METADATA_ONLY
         group.MapPost("/job-apps/{jobAppId:int}/attachments", async (
             int jobAppId,
             CreateAttachmentRequest req,
@@ -173,13 +210,15 @@ public static class AttachmentEndpoints
                 return Results.BadRequest(new { error = "SizeBytes must be > 0." });
 
             if (string.IsNullOrWhiteSpace(req.StorageKey))
-                return Results.BadRequest(new { error = "StorageKey is required (from presign-upload)." });
+                return Results.BadRequest(new { error = "StorageKey is required." });
 
-            // ✅ Guardrail: ensure the storage key is within this user's prefix
-            // 🔎 SEARCH TERM: ATTACHMENTS_STORAGEKEY_OWNERSHIP_CHECK
-            var expectedPrefix = $"users/{userId}/job-apps/{jobAppId}/attachments/";
+            // Guardrail: storage key must belong to this user + job app
+            // SEARCH TERM: ATTACHMENTS_STORAGEKEY_OWNERSHIP_CHECK
+            var expectedPrefix =
+                $"users/{userId}/job-apps/{jobAppId}/attachments/";
+
             if (!req.StorageKey.StartsWith(expectedPrefix, StringComparison.Ordinal))
-                return Results.BadRequest(new { error = "Invalid StorageKey for this user/job application." });
+                return Results.BadRequest(new { error = "Invalid StorageKey." });
 
             var attachment = new Attachment
             {
@@ -194,26 +233,32 @@ public static class AttachmentEndpoints
             db.Attachments.Add(attachment);
             await db.SaveChangesAsync();
 
-            return Results.Created($"/api/attachments/{attachment.Id}", ToDto(attachment));
+            return Results.Created(
+                $"/api/attachments/{attachment.Id}",
+                ToDto(attachment)
+            );
         });
 
         // ================================
-        // 🔎 SEARCH TERM: ATTACHMENTS_PRESIGN_DOWNLOAD_ENDPOINT
-        // GET /api/attachments/{id}/presign-download
-        // Returns a presigned GET URL to download the private S3 object.
+        // PRESIGN DOWNLOAD
         // ================================
+        // GET /api/attachments/{id}/presign-download
+        // - Returns temporary GET URL for private S3 object
+        // SEARCH TERM: ATTACHMENTS_PRESIGN_DOWNLOAD_ENDPOINT
         group.MapGet("/attachments/{id:int}/presign-download", async (
             int id,
             AppDbContext db,
             ClaimsPrincipal user,
             IAmazonS3 s3) =>
         {
-            const int ExpSeconds = 10 * 60; // 10 minutes
+            const int ExpSeconds = 10 * 60;
+
             var userId = int.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
             var attachment = await db.Attachments
                 .Include(a => a.JobApplication!)
-                .FirstOrDefaultAsync(a => a.Id == id && a.JobApplication!.UserId == userId);
+                .FirstOrDefaultAsync(a =>
+                    a.Id == id && a.JobApplication!.UserId == userId);
 
             if (attachment is null) return Results.NotFound();
 
@@ -235,10 +280,12 @@ public static class AttachmentEndpoints
         });
 
         // ================================
-        // 🔎 SEARCH TERM: ATTACHMENTS_DELETE_ENDPOINT_WITH_S3_DELETE
-        // DELETE /api/attachments/{id}
-        // Deletes DB metadata + best-effort deletes the S3 object.
+        // DELETE ATTACHMENT
         // ================================
+        // DELETE /api/attachments/{id}
+        // - Deletes DB metadata
+        // - Best-effort deletes S3 object
+        // SEARCH TERM: ATTACHMENTS_DELETE_ENDPOINT_WITH_S3_DELETE
         group.MapDelete("/attachments/{id:int}", async (
             int id,
             AppDbContext db,
@@ -249,12 +296,14 @@ public static class AttachmentEndpoints
 
             var attachment = await db.Attachments
                 .Include(a => a.JobApplication!)
-                .FirstOrDefaultAsync(a => a.Id == id && a.JobApplication!.UserId == userId);
+                .FirstOrDefaultAsync(a =>
+                    a.Id == id && a.JobApplication!.UserId == userId);
 
             if (attachment is null) return Results.NotFound();
 
             var bucket = Environment.GetEnvironmentVariable("S3_BUCKET_NAME");
-            if (!string.IsNullOrWhiteSpace(bucket) && !string.IsNullOrWhiteSpace(attachment.StorageKey))
+            if (!string.IsNullOrWhiteSpace(bucket)
+                && !string.IsNullOrWhiteSpace(attachment.StorageKey))
             {
                 try
                 {
@@ -266,7 +315,7 @@ public static class AttachmentEndpoints
                 }
                 catch
                 {
-                    // Best-effort: we still remove metadata even if S3 delete fails.
+                    // Best-effort cleanup: metadata is still removed
                 }
             }
 

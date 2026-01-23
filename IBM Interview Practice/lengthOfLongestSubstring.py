@@ -1,0 +1,41 @@
+# Problem:
+# Given a string s, find the length of the longest substring
+# without repeating characters.
+#
+# Example:
+# Input: s = "abcabcbb"
+# Output: 3  # "abc"
+
+# Time Complexity: O(n)
+# Space Complexity: O(n)
+
+def lengthOfLongestSubstring(s):
+    seen = set()
+    left = 0
+    best = 0
+
+    for right, ch in enumerate(s):
+        while ch in seen:
+            # we're removing the left most character string so that the window can move right by +1
+            seen.remove(s[left])
+            left += 1
+        # if we haven't seen the character, we're adding it to the seen set
+        seen.add(ch)
+
+        best = max(best, right - left + 1)
+
+    return best
+
+
+# Pattern: Sliding Window + Set
+#
+# Interview explanation:
+# I use a sliding window to represent a substring with unique characters.
+# The right pointer expands the window using enumerate, starting at index 0.
+# I use a set to track which characters are currently in the window.
+# If a duplicate character appears, I shrink the window from the left
+# until the window becomes valid again.
+# After each valid window, I update the maximum length found so far.
+#
+# Time Complexity: O(n)
+# Space Complexity: O(n)

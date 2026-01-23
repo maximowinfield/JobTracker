@@ -1,0 +1,115 @@
+# Problem:
+# Given the head of a singly linked list, reverse the list
+# and return the new head.
+#
+# Example:
+# Input: 1 -> 2 -> 3 -> 4 -> 5
+# Output: 5 -> 4 -> 3 -> 2 -> 1
+
+# Time Complexity: O(n)
+# Space Complexity: O(1)
+
+#define the reverseList function, we pass the head through it
+def reverseList(head):
+    # always start with prev as none, because the singly linked list is not a cycle
+    prev = None
+    # we start at the head as usual
+    curr = head
+
+    # start a while loop
+    while curr:
+        # we are setting the nxt node (saving it) because we are about to break the chain
+        nxt = curr.next
+        # this is important as we are setting the next node of the current to the previous node.
+        curr.next = prev
+        # now that my next node of my current is previous (reversed) we set the current node to previous.
+        prev = curr
+        # now that we set the previous node to the current one, the next pointer becomes the current node!
+        curr = nxt
+    # we return prev, because prev is now the new head of the reversed list
+    return prev
+
+# Pattern: Linked List Pointer Manipulation
+#
+# Interview explanation:
+# I iterate through the linked list while reversing the direction of each node’s
+# next pointer. I keep track of the previous node, the current node, and the next
+# node so I do not lose access to the rest of the list.
+# At each step, I redirect the current node’s next pointer to the previous node,
+# then advance both pointers forward.
+# When the traversal is complete, the previous node becomes the new head.
+#
+# Time Complexity: O(n)
+# Space Complexity: O(1)
+
+def reverseList(head):
+    prev = None
+    curr = head
+
+    while curr:
+        nxt = curr.next
+        curr.next = prev
+        prev = curr
+        curr = next
+
+    return prev
+
+def reverseList(head):
+    prev = None
+    curr = head
+
+    while curr:
+        nxt = curr.next
+        curr.next = prev
+        prev = curr
+        curr = next
+
+    return prev
+
+def reverseList(head):
+    prev = None
+    curr = head
+
+    while curr:
+        nxt = curr.next
+        curr.next = prev
+        prev = curr
+        curr = nxt
+
+    return prev
+
+def reverseList(head):
+    curr = head
+    prev = None
+
+    while curr:
+        nxt = curr.next
+        curr.next = prev
+        prev = curr
+        curr = next
+
+    return prev
+
+def reverseList(head):
+    curr = head
+    prev = None
+
+    while curr:
+        nxt = curr.next
+        curr.next = prev
+        prev = curr
+        curr = nxt
+
+    return prev
+
+def reverseList(head):
+    curr = head
+    prev = None
+
+    while curr:
+        nxt = curr.next
+        curr.next = [prev]
+        prev = curr
+        curr = next
+
+    return prev

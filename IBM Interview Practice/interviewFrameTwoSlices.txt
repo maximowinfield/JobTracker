@@ -1,4 +1,4 @@
-Authentication slice | Vertical Architecture
+Authentication slice | Horizontal Architecture
 
 AuthEndpoints.cs → JWT → client.ts adds token → AuthProvider stores state → useAuth exposes it
 
