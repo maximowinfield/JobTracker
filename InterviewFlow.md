@@ -74,6 +74,13 @@ One-liner
 - Validates the JWT
 - Builds the user identity (`ClaimsPrincipal`)
 
+```csharp
+// Authentication middleware
+// - Validates incoming JWTs
+// - Builds the ClaimsPrincipal used throughout the request
+app.UseAuthentication();
+```
+
 ### Authorization
 - Enforces access rules on protected endpoints
 - Roles/Policies can be added later
