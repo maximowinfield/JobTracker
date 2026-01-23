@@ -70,18 +70,14 @@ One-liner
 *Program.cs configures dependency injection so services like the database context, JWT token service, and AWS S3 client can be injected where needed instead of being manually constructed.*
 
 ### Auth pipeline order
-### Authentication
-- Validates the JWT
-- Builds the user identity (`ClaimsPrincipal`)
 
-```csharp
-// Authentication middleware
-// - Validates incoming JWTs
-// - Builds the ClaimsPrincipal used throughout the request
-app.UseAuthentication();
-```
+### 1. Authentication
+- Validates the JWT ``` // Authentication (JWT Bearer)```
+- Builds the user identity (`ClaimsPrincipal`) // ``` - Authenticate first (build user principal from token) builds the ClaimsPrincipal ``` 
 
-### Authorization
+
+
+### 2. Authorization
 - Enforces access rules on protected endpoints
 - Roles/Policies can be added later
 
@@ -91,6 +87,9 @@ app.UseAuthentication();
 
 
 ### CORS (Cross-Origin Resource Sharing)
+```
+// CORS (Cross-Origin Resource Sharing)
+```
 - Allows the React frontend (different origin) to call the API
 - Configured as development-friendly:
   - Allows all headers
