@@ -4,6 +4,47 @@ JobTracker is a full‑stack web application designed to help users track job ap
 
 This project was built to demonstrate real‑world software engineering skills, including RESTful API design, authentication, optimistic UI updates, drag‑and‑drop state management, and production deployment.
 
+Tech Stack:
+JobTracker is a full-stack application with a React frontend built using Vite and styled with Tailwind CSS, and a .NET 8 Minimal API backend using Entity Framework Core for data access. The backend exposes RESTful endpoints and handles authentication, business logic, and persistence, while Node.js is used only for frontend build tooling, not for the backend.
+
+# JobTracker – Tech Stack 
+
+## Frontend
+- **React** – Component-based user interface  
+- **Vite** – Development server and build tooling  
+- **Tailwind CSS** – Styling and responsive layout  
+- **JavaScript / TypeScript** – Frontend logic  
+
+## Backend
+- **.NET 8 Minimal APIs** – Backend framework  
+- **Entity Framework Core** – Data modeling and data access layer  
+- **RESTful API Design** – Resource-based endpoints using standard HTTP methods  
+- **JWT Authentication** – Stateless authentication and authorization  
+
+## Cloud & Deployment
+- **Amazon Web Services (AWS) S3** – File attachments using presigned URLs  
+- **Render** – Application deployment  
+
+## Development & Tooling
+- **Node.js** – Frontend tooling only (Vite builds)  
+- **Git & GitHub** – Version control  
+- **Environment Variables** – Configuration and secrets management  
+
+## Architecture & Practices
+- Client–Server Architecture  
+- **RESTful Design Principles**
+  - Client–Server Separation
+  - Statelessness
+  - Resource-Based Design
+  - Standard HTTP Methods
+  - Meaningful HTTP Status Codes
+  - Uniform Interface
+  - Layered System
+  - Cacheability 
+- Layered Backend Structure  
+- Secure File Uploads  
+
+
 ---
 
 ## 🚀 Features
