@@ -1,7 +1,7 @@
 import type React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthProvider";
-import { useAuth } from "./context/useAuth";
+import { useAuth } from "./context/useAuth";  
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import JobAppsPage from "./pages/JobAppsPage";

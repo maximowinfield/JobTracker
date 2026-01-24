@@ -16,7 +16,7 @@ API client attaches Authorization header (JWT)
 → client.ts
 
 Request enters backend middleware pipeline
-→ Program.cs
+→ Program.cs                                                                                                                    
 
 JWT is validated
 → Program.cs (UseAuthentication())
@@ -38,3 +38,18 @@ Frontend receives data and updates state
 
 UI renders the job application list
 → JobAppsPage.tsx
+
+// Job Apps Page Load Flow (High-Level)
+// 1. User navigates to the Job Apps page and JobAppsPage.tsx mounts
+// 2. A useEffect runs on mount to load job application data
+// 3. The effect calls the service layer in jobApps.ts
+// 4. The service uses the shared API client in client.ts
+// 5. The API client automatically attaches the Authorization header with the JWT
+// 6. The request enters the backend through Program.cs
+//    - UseAuthentication validates the JWT
+//    - UseAuthorization enforces access rules
+// 7. The request is routed to JobAppEndpoints.cs
+// 8. Endpoints use Entity Framework Core via AppDbContext
+//    to read or write JobApplication data
+// 9. The API returns a JSON response
+// 10. The frontend updates state and renders the job application list

@@ -4,7 +4,7 @@
 
 # define the binarySearch function passing, the array and target through it
 def binarySearch(nums, target):
-    # initialize pointers starting at the beginning and end of the array
+    # initialize index starting at the beginning and end of the array
     left = 0
     right = len(nums) - 1
 
