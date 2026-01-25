@@ -1,0 +1,59 @@
+Authentication slice | Horizontal Architecture
+
+AuthEndpoints.cs → JWT → client.ts adds token → AuthProvider stores state → useAuth exposes it
+
+Job Apps slice
+
+JobAppEndpoints.cs → JobApplication model/status enum → jobapps.ts calls API → JobAppsPage.tsx renders
+
+The Walkthrough
+
+Authentication slice
+AuthEndpoints.cs → JWT issued
+client.ts adds token
+AuthProvider.tsx stores auth state
+useAuth.ts exposes auth to components
+
+Job Apps slice
+JobAppEndpoints.cs → CRUD endpoints
+JobApplication.cs + ApplicationStatus.cs → domain model
+jobapps.ts calls API
+JobAppsPage.tsx renders UI
+
+Program.cs (The glue, middleware)
+ ├─ configures JWT authentication & authorization // JSON_SERIALIZATION_CONFIG
+ ├─ registers DbContext (EF Core) // DB_CONTEXT_REGISTRATION
+ ├─ wires AWS S3 client // S3_DI_REGISTRATION_PROGRAM_CS
+ ├─ sets up CORS, middleware, static hosting // CORS_FRONTEND_POLICY
+ ├─ maps Auth / JobApps / Attachments endpoints
+
+ 1. I configure JSON once so enums serialize as strings. 
+    That keeps the frontend clean and avoids brittle client-side mappings
+
+ 2. I use EF Core’s provider abstraction. 
+    Same code runs locally on SQLite and in production on Postgres, driven entirely by config.
+ 
+ 3. I register the S3 client once as a singleton. 
+    It’s thread-safe and used by my attachments feature for presigned URLs.
+
+ 4. // JWT_OPTIONS_CONFIG I centralize JWT config so issuer, audience, and secret are consistent everywhere.
+
+ 5. // JWT_AUTHENTICATION_PIPELINE JWT is stateless. 
+    Every request brings its own token, and the server validates it independently.
+
+ 6. // CORS_FRONTEND_POLICY I allow cross-origin calls from the frontend. 
+    In production I’d lock this to known domains.
+
+ 7. // AUTH_PIPELINE_ORDER Order matters. Authentication builds the user, authorization enforces access.
+
+ 8. // FEATURE_ENDPOINT_MAPPING I keep Program.cs readable by mapping endpoints by responsibility 
+    instead of dumping logic here.
+
+ 9. Program.cs wires infrastructure: JSON, EF Core, JWT auth, S3, middleware, 
+    and then delegates to feature endpoints. All business logic lives outside of it.
+
+
+"I structured the project around vertical slices for authentication and job applications. 
+Program.cs isn’t a slice itself — it acts as the composition root. 
+It configures cross-cutting concerns like 
+authentication, database access, CORS, and dependency injection, and then wires the feature slices together."

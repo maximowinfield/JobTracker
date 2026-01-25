@@ -38,6 +38,7 @@ def maxDepth(root):
     left_depth = maxDepth(root.left)
     right_depth = maxDepth(root.right)
 
-    # returning 1+ because the root depth is always 1 + the maximum of the two left and right depths. Giving a total maxDepth
+    # returning 1+ because the root depth is always 1 + the maximum of the two left and right depths. 
+    # Giving a total maxDepth
     return 1 + max(left_depth, right_depth)
 
