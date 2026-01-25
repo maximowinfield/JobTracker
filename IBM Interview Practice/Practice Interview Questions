@@ -1,0 +1,64 @@
+## How did you decide on your tech stack for your projects?
+
+Tech Stack:
+See Tech_Stack_Overview.pdf
+
+1. I chose my tech stack based on realism and scalability. For both projects, I used .NET 8 Minimal APIs on the backend because I wanted a clean, production-style API with strong typing, built-in dependency injection, and first-class support for authentication. I looked for the most support and easiest methods, these projects were meant to be worked on and scaled throughout the year.
+
+2. Larger Explanation:
+   For my both projects, I intentionally chose a modern full-stack setup that reflects how production apps are built.
+   On the backend, .NET 8 Minimal APIs let me keep a clean HTTP surface while still supporting middleware like JWT authentication, authorization policies, and async data access.
+   I used EF Core because it gives me strong domain modeling, relationship handling, and provider abstraction—so the same queries work across SQLite and PostgreSQL.
+   On the frontend, React gave me predictable state flow and reusable components, which was especially important for things like Kanban boards, attachments, and role-based UI.
+   The stack wasn’t random—it was chosen to demonstrate real-world patterns, not just to make something that ‘works.
+
+## Why IBM?
+
+1. IBM, often referred to as “Big Blue,” stands out to me because it has been a technology leader for over a century, tracing back to its founding in 1911. Very few companies have remained relevant across so many eras of computing, and that longevity reflects IBM’s strong engineering culture and long-term vision.
+
+What really attracts me to IBM is the focus on enterprise-scale systems. There is a clear respect for building technology that lasts, meaning systems that are secure, reliable, and maintainable over time. That mindset aligns closely with how I approach my own projects.
+
+I am also excited about IBM’s leadership in AI and cloud platforms, especially at the enterprise level. More recently, IBM partnered with Etisalat, now known as e& (pronounced E-and), to collaborate on enterprise-grade agentic AI solutions. That partnership shows how IBM applies AI in real business environments with governance and trust built in.
+
+Finally, the IBM watsonx platform really stands out to me. I like that watsonx is structured around three core parts.
+watsonx.ai is where AI models live and run.
+watsonx.data supports AI workloads through trusted enterprise data.
+watsonx.governance allows tracking of model behavior, risk, and compliance.
+
+What I find especially compelling about agentic AI is that it does not just respond to prompts. It has the ability to take action and complete multi-step tasks, while still operating within clear, governed boundaries. Having the opportunity to work with watsonx and contribute to that kind of system would be a huge honor.
+
+## Quick one-liners:
+
+1. You guys have been doing it for well over a hundred years
+2. I'm aware of the recent partnering with e& (etisalat) to collaborate on an enterprise-grade agentic AI solution
+   (I would love to be a part of that ^)
+3. Agentic AI
+4. If there was an opportunity to use Watsonx is a huge honor. I know about the three core parts of WatsonX, there is watsonx.ai, watsonx.data, and watsonx.governance
+
+.ai is where AI models live and run
+while .data supports the AI workloads
+.governance allows tracking of model behavior amongst other things.
+
+5. What I like about Agentic AI is that it doesn't just respond it has the ability to take action. Even multi-step tasks.
+
+## More Quick one-liners
+
+1. IBM has been building enterprise technology for over a hundred years, and that longevity matters to me.
+
+2. I am aware of IBM’s recent partnership with Etisalat, now e&, on enterprise-grade agentic AI solutions.
+
+3. What excites me about agentic AI is that it can take action, not just respond, including multi-step workflows.
+
+4. watsonx stands out because it treats AI as a complete system, including models, data, and governance.
+
+## What’s your favorite frontend library?
+
+1. My favorite frontend library is React. I like React because it encourages component-based design, predictable data flow, and clean separation of concerns in the UI.
+
+In my projects, React makes it much easier to manage complex user interfaces, such as Kanban-style workflows, drag-and-drop interactions, and role-based views, without the codebase becoming difficult to maintain. The way React handles state and composition allows the UI to scale as features grow.
+
+I also appreciate that React is flexible rather than overly opinionated. It gives me control over architecture decisions, which mirrors how backend systems are designed, instead of locking me into a rigid framework.
+
+Shorter Version:
+
+2. My favorite frontend library is React because it provides a clean component model, predictable state management, and flexibility to scale as applications grow.
