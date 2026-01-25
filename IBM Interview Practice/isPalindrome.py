@@ -74,4 +74,10 @@ def isPalindrome(s: str) -> bool:
 # If all valid characters match, I return True.
 #
 # Time Complexity: O(n)
+# The left and right pointers move inward across the string,
+# checking each character at most once.
+#
 # Space Complexity: O(1)
+# Only pointer variables are used, and no additional data structures
+# are created that grow with input size.
+

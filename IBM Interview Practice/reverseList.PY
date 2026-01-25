@@ -7,7 +7,12 @@
 # Output: 5 -> 4 -> 3 -> 2 -> 1
 
 # Time Complexity: O(n)
+# We traverse the linked list once, reversing the pointer for each node.
+#
 # Space Complexity: O(1)
+# The algorithm uses a constant number of pointers (prev, curr, next),
+# regardless of the size of the linked list.
+
 
 #define the reverseList function, we pass the head through it
 def reverseList(head):
@@ -39,8 +44,6 @@ def reverseList(head):
 # then advance both pointers forward.
 # When the traversal is complete, the previous node becomes the new head.
 #
-# Time Complexity: O(n)
-# Space Complexity: O(1)
 
 def reverseList(head):
     prev = None

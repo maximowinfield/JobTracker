@@ -5,8 +5,6 @@
 # A cycle exists if a node's next pointer points to
 # a previous node in the list.
 
-# Time Complexity: O(n)
-# Space Complexity: O(1)
 
 def hasCycle(head):
     slow = head
@@ -31,4 +29,9 @@ def hasCycle(head):
 # If the fast pointer reaches the end of the list, then no cycle exists.
 #
 # Time Complexity: O(n)
+# In the worst case, the fast pointer traverses the entire list.
+# If a cycle exists, the fast and slow pointers will meet.
+#
 # Space Complexity: O(1)
+# Only two pointers are used to detect the cycle,
+# with no extra memory proportional to input size.

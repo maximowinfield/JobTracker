@@ -4,8 +4,6 @@
 # The maximum depth is the number of nodes along the longest
 # path from the root node down to the farthest leaf node.
 
-# Time Complexity: O(n)
-# Space Complexity: O(h) where h is the height of the tree
 
 def maxDepth(root):
     if root is None:
@@ -26,7 +24,14 @@ def maxDepth(root):
 # This ensures I count the longest path from the root to a leaf node.
 #
 # Time Complexity: O(n)
-# Space Complexity: O(h), where h is the height of the tree (worst case O(n))
+# We visit each node in the tree exactly once to compute the depth,
+# so the runtime grows linearly with the number of nodes.
+#
+# Space Complexity: O(h)
+# The extra space comes from the recursion call stack.
+# At most, there is one recursive call per level of the tree,
+# where h is the height of the tree.
+
 
 # defining the function
 def maxDepth(root):
@@ -41,4 +46,5 @@ def maxDepth(root):
     # returning 1+ because the root depth is always 1 + the maximum of the two left and right depths. 
     # Giving a total maxDepth
     return 1 + max(left_depth, right_depth)
+
 

@@ -7,7 +7,12 @@
 # Output: 3  # "abc"
 
 # Time Complexity: O(n)
+# Each character is added to the set once and removed at most once
+# as the sliding window moves, resulting in linear time overall.
+#
 # Space Complexity: O(n)
+# In the worst case, the set stores all unique characters from the string.
+
 
 def lengthOfLongestSubstring(s):
     seen = set()
@@ -37,5 +42,4 @@ def lengthOfLongestSubstring(s):
 # until the window becomes valid again.
 # After each valid window, I update the maximum length found so far.
 #
-# Time Complexity: O(n)
-# Space Complexity: O(n)
+

@@ -14,7 +14,13 @@ class ListNode:
 # Output: 1 -> 1 -> 2 -> 3 -> 4 -> 4
 
 # Time Complexity: O(n + m)
+# Each node from both linked lists is processed once while merging,
+# where n and m are the lengths of the two lists.
+#
 # Space Complexity: O(1) extra space
+# The merge is done in-place by reusing existing nodes.
+# Only a few pointers are used, and no new data structures are created.
+
 
 def mergeTwoLists(l1, l2):
     dummy = ListNode(0)
@@ -43,5 +49,4 @@ def mergeTwoLists(l1, l2):
 # After one list is exhausted, I append the remaining nodes from the other list.
 # Finally, I return the node following the dummy head.
 #
-# Time Complexity: O(n + m)
-# Space Complexity: O(1) extra space
+
