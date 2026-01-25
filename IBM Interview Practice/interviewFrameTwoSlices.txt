@@ -27,4 +27,7 @@ Program.cs (The glue, middleware)
  ├─ sets up CORS, middleware, static hosting
  ├─ maps Auth / JobApps / Attachments endpoints
 
-"I structured the project around vertical slices for authentication and job applications. Program.cs isn’t a slice itself — it acts as the composition root. It configures cross-cutting concerns like authentication, database access, CORS, and dependency injection, and then wires the feature slices together."
+"I structured the project around vertical slices for authentication and job applications. 
+Program.cs isn’t a slice itself — it acts as the composition root. 
+It configures cross-cutting concerns like 
+authentication, database access, CORS, and dependency injection, and then wires the feature slices together."
