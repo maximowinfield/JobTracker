@@ -81,3 +81,30 @@ def isPalindrome(s: str) -> bool:
 # Only pointer variables are used, and no additional data structures
 # are created that grow with input size.
 
+# Another is_palindrome solution using a stack
+
+# we define the function, and pass the string through it
+def is_palindrome(s):
+    # initialize a stack, a stack is like a stack of plates, Last in, first out.
+    stack = []
+
+    # Push all characters onto the stack
+    for char in s:
+        stack.append(char)
+
+    # Compare characters with popped values
+    for char in s:
+        # if the current character doesn't equal the current stack pop, then it's not
+        if char != stack.pop():
+            # a palindrome
+            return False
+
+    return True
+# Time Complexity: O(n)
+# - The string is traversed twice:
+#   1) Once to push all characters onto the stack
+#   2) Once to pop and compare each character
+# - O(n) + O(n) simplifies to O(n)
+
+# Space Complexity: O(n)
+# - The stack stores all n characters from the string
